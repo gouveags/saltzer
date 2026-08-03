@@ -3,6 +3,8 @@ import {
   type CreateOutcomeInput,
   LocalDateSchema,
   type Outcome,
+  type ProgressCheckInInput,
+  type StartFocusInput,
   type TodayView,
 } from "@saltzer/domain";
 import { StatusBar } from "expo-status-bar";
@@ -23,6 +25,7 @@ import { AuthScreen } from "@/components/auth-screen";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/button";
 import { DetailSheet } from "@/components/detail-sheet";
+import { FocusSheet } from "@/components/focus-sheet";
 import { OutcomeCard } from "@/components/outcome-card";
 import { OutcomeEditor } from "@/components/outcome-editor";
 import { darkTheme, fonts, lightTheme } from "@/constants/theme";
@@ -45,6 +48,10 @@ export default function HomeScreen() {
   const [editing, setEditing] = useState<Outcome | null>(null);
   const [mutationPending, setMutationPending] = useState(false);
   const [pendingOutcome, setPendingOutcome] = useState<string | null>(null);
+  const [focusSheet, setFocusSheet] = useState<{
+    mode: "start" | "check-in";
+    outcome: Outcome;
+  } | null>(null);
   const [detail, setDetail] = useState<{
     eyebrow: string;
     title: string;
@@ -68,15 +75,17 @@ export default function HomeScreen() {
     if (session?.user) void loadToday();
   }, [loadToday, session?.user]);
 
-  async function mutate(action: () => Promise<unknown>, outcomeId?: string) {
+  async function mutate(action: () => Promise<unknown>, outcomeId?: string): Promise<boolean> {
     setError(null);
     setMutationPending(true);
     setPendingOutcome(outcomeId ?? null);
     try {
       await action();
       await loadToday();
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Saltzer could not save the decision.");
+      return false;
     } finally {
       setMutationPending(false);
       setPendingOutcome(null);
@@ -84,11 +93,39 @@ export default function HomeScreen() {
   }
 
   async function saveOutcome(input: CreateOutcomeInput) {
-    await mutate(() =>
+    const saved = await mutate(() =>
       editing ? api.updateOutcome(editing.id, input) : api.addOutcome(localDate, input),
     );
+    if (!saved) return;
     setEditorOpen(false);
     setEditing(null);
+  }
+
+  async function startFocus(input: StartFocusInput) {
+    if (!focusSheet) return;
+    const saved = await mutate(
+      () => api.startFocus(focusSheet.outcome.id, input),
+      focusSheet.outcome.id,
+    );
+    if (saved) setFocusSheet(null);
+  }
+
+  async function checkInProgress(input: ProgressCheckInInput) {
+    if (!focusSheet) return;
+    const saved = await mutate(
+      () => api.checkInProgress(focusSheet.outcome.id, input),
+      focusSheet.outcome.id,
+    );
+    if (saved) setFocusSheet(null);
+  }
+
+  async function signOut() {
+    setError(null);
+    try {
+      await authClient.signOut();
+    } catch {
+      setError("Saltzer could not reach the server to sign out. Your day is still saved.");
+    }
   }
 
   async function decide(
@@ -174,6 +211,7 @@ export default function HomeScreen() {
 
   const outcomes = view?.contract?.outcomes ?? [];
   const planned = outcomes.filter((outcome) => outcome.status === "planned");
+  const activeFocus = planned.find((outcome) => outcome.focusStartedAt) ?? null;
   const completed = outcomes.filter((outcome) => outcome.status === "completed");
   const released = outcomes.filter((outcome) => outcome.status === "released");
   const committedCount = outcomes.length;
@@ -186,7 +224,7 @@ export default function HomeScreen() {
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.background }]}>
       <StatusBar style={dark ? "light" : "dark"} />
       <View style={[styles.ambient, { borderColor: theme.hairline, pointerEvents: "none" }]} />
-      <View style={styles.shell}>
+      <View style={[styles.shell, !wide && styles.shellMobile]}>
         {wide ? (
           <View style={[styles.rail, { borderRightColor: theme.hairline }]}>
             <BrandMark compact theme={theme} />
@@ -212,7 +250,7 @@ export default function HomeScreen() {
                 accessibilityLabel="Sign out"
                 accessibilityRole="button"
                 hitSlop={8}
-                onPress={() => void authClient.signOut()}
+                onPress={() => void signOut()}
               >
                 <Text style={[styles.railAction, { color: theme.inkMuted }]}>SIGN OUT</Text>
               </Pressable>
@@ -224,13 +262,24 @@ export default function HomeScreen() {
             <Text style={[styles.mobileDate, { color: theme.inkMuted }]}>
               {longDate(localDate)}
             </Text>
-            <Pressable
-              accessibilityLabel={`Use ${dark ? "light" : "dark"} theme`}
-              accessibilityRole="button"
-              onPress={() => setDark(!dark)}
-            >
-              <Text style={[styles.mobileTheme, { color: theme.ink }]}>◐</Text>
-            </Pressable>
+            <View style={styles.mobileActions}>
+              <Pressable
+                accessibilityLabel={`Use ${dark ? "light" : "dark"} theme`}
+                accessibilityRole="button"
+                onPress={() => setDark(!dark)}
+              >
+                <Text style={[styles.mobileAction, { color: theme.inkMuted }]}>
+                  {dark ? "LIGHT" : "DARK"}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel="Sign out"
+                accessibilityRole="button"
+                onPress={() => void signOut()}
+              >
+                <Text style={[styles.mobileAction, { color: theme.inkMuted }]}>SIGN OUT</Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -270,7 +319,11 @@ export default function HomeScreen() {
               ]}
             >
               <Text style={[styles.errorText, { color: theme.ink }]}>{error}</Text>
-              <Pressable onPress={() => setError(null)}>
+              <Pressable
+                accessibilityLabel="Dismiss error"
+                accessibilityRole="button"
+                onPress={() => setError(null)}
+              >
                 <Text style={[styles.errorClose, { color: theme.ink }]}>×</Text>
               </Pressable>
             </View>
@@ -304,6 +357,44 @@ export default function HomeScreen() {
               >
                 Bring into today
               </Button>
+            </View>
+          )}
+
+          {activeFocus && (
+            <View
+              style={[
+                styles.focusHero,
+                !wide && styles.focusHeroMobile,
+                { backgroundColor: theme.surfaceStrong, borderColor: theme.moss },
+              ]}
+            >
+              <View style={styles.focusHeroCopy}>
+                <Text style={[styles.focusHeroKicker, { color: theme.moss }]}>IN FOCUS NOW</Text>
+                <Text style={[styles.focusHeroTitle, { color: theme.ink }]}>
+                  {activeFocus.title}
+                </Text>
+                <Text style={[styles.focusHeroLabel, { color: theme.inkMuted }]}>NEXT MOVE</Text>
+                <Text style={[styles.focusHeroAction, { color: theme.ink }]}>
+                  {activeFocus.nextAction}
+                </Text>
+              </View>
+              <View style={styles.focusHeroActions}>
+                <Button
+                  accessibilityLabel={`Start AI with current focus: ${activeFocus.title}`}
+                  kind="outline"
+                  onPress={() => void showContext(activeFocus)}
+                  theme={theme}
+                >
+                  Start with AI
+                </Button>
+                <Button
+                  accessibilityLabel="Check in on current focus"
+                  onPress={() => setFocusSheet({ mode: "check-in", outcome: activeFocus })}
+                  theme={theme}
+                >
+                  Check in
+                </Button>
+              </View>
             </View>
           )}
 
@@ -350,11 +441,13 @@ export default function HomeScreen() {
                     index={outcome.position ?? index}
                     onComplete={() => void decide(outcome, "complete")}
                     onContext={() => void showContext(outcome)}
+                    onCheckIn={() => setFocusSheet({ mode: "check-in", outcome })}
                     onEdit={() => {
                       setEditing(outcome);
                       setEditorOpen(true);
                     }}
                     onRelease={() => void decide(outcome, "release")}
+                    onFocus={() => setFocusSheet({ mode: "start", outcome })}
                     onSchedule={(date) => void schedule(outcome, date)}
                     onTomorrow={() => void decide(outcome, "tomorrow")}
                     outcome={outcome}
@@ -492,6 +585,16 @@ export default function HomeScreen() {
         theme={theme}
         visible={editorOpen}
       />
+      <FocusSheet
+        mode={focusSheet?.mode ?? "start"}
+        onClose={() => setFocusSheet(null)}
+        onProgress={checkInProgress}
+        onStart={startFocus}
+        outcome={focusSheet?.outcome ?? null}
+        pending={mutationPending}
+        theme={theme}
+        visible={focusSheet !== null}
+      />
       <DetailSheet
         body={detail?.body ?? ""}
         eyebrow={detail?.eyebrow ?? ""}
@@ -517,6 +620,7 @@ function LoadingScreen({ theme }: { theme: typeof lightTheme | typeof darkTheme 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   shell: { flex: 1, flexDirection: "row" },
+  shellMobile: { flexDirection: "column" },
   ambient: {
     borderRadius: 999,
     borderWidth: 1,
@@ -556,7 +660,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   mobileDate: { fontFamily: fonts.serif, fontSize: 12 },
-  mobileTheme: { fontSize: 20 },
+  mobileActions: { alignItems: "center", flexDirection: "row", gap: 12 },
+  mobileAction: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 0.8 },
   content: {
     alignSelf: "center",
     maxWidth: 1240,
@@ -609,6 +714,23 @@ const styles = StyleSheet.create({
   scheduledCopy: { flex: 1, gap: 5 },
   scheduledLabel: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.2 },
   scheduledTitle: { fontFamily: fonts.serifMedium, fontSize: 18 },
+  focusHero: {
+    alignItems: "center",
+    borderRadius: 4,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 28,
+    justifyContent: "space-between",
+    marginBottom: 34,
+    padding: 24,
+  },
+  focusHeroMobile: { alignItems: "stretch", flexDirection: "column" },
+  focusHeroCopy: { flex: 1, gap: 6 },
+  focusHeroKicker: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.35 },
+  focusHeroTitle: { fontFamily: fonts.display, fontSize: 29, letterSpacing: -0.7 },
+  focusHeroLabel: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.2, marginTop: 7 },
+  focusHeroAction: { fontFamily: fonts.serifMedium, fontSize: 18, lineHeight: 24 },
+  focusHeroActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   sectionHeader: {
     alignItems: "flex-end",
     flexDirection: "row",

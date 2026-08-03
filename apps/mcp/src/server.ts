@@ -5,7 +5,14 @@ import { z } from "zod";
 
 export type SaltzerToolClient = Pick<
   SaltzerClient,
-  "addOutcome" | "addScheduledToDay" | "closeDay" | "contextPacket" | "decideOutcome" | "today"
+  | "addOutcome"
+  | "addScheduledToDay"
+  | "checkInProgress"
+  | "closeDay"
+  | "contextPacket"
+  | "decideOutcome"
+  | "startFocus"
+  | "today"
 >;
 
 function text(value: unknown) {
@@ -100,6 +107,38 @@ export function createMcpServer(client: SaltzerToolClient) {
       inputSchema: { id: z.uuid(), date: LocalDateSchema },
     },
     async ({ id, date }) => text(await client.addScheduledToDay(id, date)),
+  );
+
+  server.registerTool(
+    "start_focus",
+    {
+      description:
+        "Start working on an outcome the user already chose. This makes it the only active focus.",
+      inputSchema: { id: z.uuid(), nextAction: z.string().min(1).max(500) },
+    },
+    async ({ id, nextAction }) => text(await client.startFocus(id, { nextAction })),
+  );
+
+  server.registerTool(
+    "record_progress",
+    {
+      description:
+        "Record what changed during active focus, then continue with a next move, pause, or mark a blocker.",
+      inputSchema: {
+        id: z.uuid(),
+        state: z.enum(["continue", "blocked", "pause"]),
+        note: z.string().min(1).max(2_000),
+        nextAction: z.string().min(1).max(500).optional(),
+      },
+    },
+    async ({ id, state, note, nextAction }) =>
+      text(
+        await client.checkInProgress(id, {
+          state,
+          note,
+          ...(nextAction ? { nextAction } : {}),
+        }),
+      ),
   );
 
   server.registerTool(

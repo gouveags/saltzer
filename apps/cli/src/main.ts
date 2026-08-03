@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { LocalDateSchema, type Outcome } from "@saltzer/domain";
+import { LocalDateSchema, type Outcome, ProgressCheckInInputSchema } from "@saltzer/domain";
 import { SaltzerApiError, SaltzerClient } from "@saltzer/sdk";
 import { Command } from "commander";
 import { localDateNow } from "./date.js";
@@ -93,6 +93,31 @@ program
       print(created);
     },
   );
+
+program
+  .command("focus")
+  .description("Make a chosen outcome the one thing to move now")
+  .argument("<id>")
+  .requiredOption("--next <action>", "The concrete next move")
+  .action(async (id: string, options: { next: string }) => {
+    print(await client().startFocus(id, { nextAction: options.next }));
+  });
+
+program
+  .command("progress")
+  .description("Check in on active focus and decide what happens next")
+  .argument("<id>")
+  .requiredOption("--note <text>", "What changed")
+  .option("--state <state>", "continue, blocked, or pause", "continue")
+  .option("--next <action>", "The next move when continuing")
+  .action(async (id: string, options: { note: string; state: string; next?: string }) => {
+    const input = ProgressCheckInInputSchema.parse({
+      state: options.state,
+      note: options.note,
+      ...(options.next ? { nextAction: options.next } : {}),
+    });
+    print(await client().checkInProgress(id, input));
+  });
 
 program
   .command("close")

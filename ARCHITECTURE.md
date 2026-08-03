@@ -48,6 +48,12 @@ release is a healthy decision; rescheduling is explicit. Nothing silently
 re-enters a future day. This event history is the foundation for future behavior
 understanding without making the visible product more complicated.
 
+Execution state stays equally explicit. A planned outcome can hold a concrete
+next action, one user-wide active focus timestamp, the latest progress check-in,
+or a captured blocker. Starting a different focus clears the previous one in the
+same transaction. Progress events preserve the behavioral history while the
+outcome row keeps today's read model fast and simple.
+
 ## Boundary rules
 
 1. The server enforces the three-outcome limit transactionally.
@@ -56,6 +62,8 @@ understanding without making the visible product more complicated.
 4. Raw provider credentials never appear in API responses, logs, or events.
 5. Context packets disclose exactly what will be shared before an AI action.
 6. Clients use optimistic UI only when a server rejection can be rolled back.
+7. Only one outcome per user may have active focus; PostgreSQL enforces this with
+   a partial unique index in addition to the transactional service rule.
 
 ## Deployment posture
 

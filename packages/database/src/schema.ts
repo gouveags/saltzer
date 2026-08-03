@@ -89,6 +89,10 @@ export const outcomeEventType = pgEnum("outcome_event_type", [
   "released",
   "rescheduled",
   "added_to_day",
+  "focus_started",
+  "progressed",
+  "blocked",
+  "focus_paused",
 ]);
 
 export const dailyContracts = pgTable(
@@ -124,6 +128,7 @@ export const outcomes = pgTable(
     desiredOutcome: text("desired_outcome").notNull().default(""),
     context: text("context").notNull().default(""),
     constraints: text("constraints").notNull().default(""),
+    nextAction: text("next_action").notNull().default(""),
     estimateMinutes: integer("estimate_minutes"),
     aiPermissions: jsonb("ai_permissions")
       .$type<AiPermission[]>()
@@ -132,6 +137,10 @@ export const outcomes = pgTable(
     status: outcomeStatus("status").notNull().default("planned"),
     scheduledFor: date("scheduled_for", { mode: "string" }),
     position: integer("position").notNull().default(0),
+    focusStartedAt: timestamp("focus_started_at", { withTimezone: true }),
+    lastProgressNote: text("last_progress_note").notNull().default(""),
+    lastProgressAt: timestamp("last_progress_at", { withTimezone: true }),
+    blockedAt: timestamp("blocked_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     releasedAt: timestamp("released_at", { withTimezone: true }),
     ...timestamps,
@@ -140,6 +149,9 @@ export const outcomes = pgTable(
     index("outcomes_contract_position_idx").on(table.contractId, table.position),
     index("outcomes_user_scheduled_idx").on(table.userId, table.scheduledFor),
     index("outcomes_user_status_idx").on(table.userId, table.status),
+    uniqueIndex("outcomes_one_active_focus_per_user")
+      .on(table.userId)
+      .where(sql`${table.focusStartedAt} is not null`),
   ],
 );
 

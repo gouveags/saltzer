@@ -33,11 +33,16 @@ export const OutcomeSchema = z.object({
   desiredOutcome: z.string(),
   context: z.string(),
   constraints: z.string(),
+  nextAction: z.string(),
   estimateMinutes: z.number().int().positive().nullable(),
   aiPermissions: z.array(AiPermissionSchema),
   status: OutcomeStatusSchema,
   scheduledFor: LocalDateSchema.nullable(),
   position: z.number().int().nonnegative(),
+  focusStartedAt: z.iso.datetime().nullable(),
+  lastProgressNote: z.string(),
+  lastProgressAt: z.iso.datetime().nullable(),
+  blockedAt: z.iso.datetime().nullable(),
   completedAt: z.iso.datetime().nullable(),
   releasedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
@@ -97,12 +102,34 @@ export const OutcomeDecisionInputSchema = z
     }
   });
 
+export const StartFocusInputSchema = z.object({
+  nextAction: z.string().trim().min(1).max(500),
+});
+
+export const ProgressCheckInInputSchema = z
+  .object({
+    state: z.enum(["continue", "blocked", "pause"]),
+    note: z.string().trim().min(1).max(2_000),
+    nextAction: z.string().trim().min(1).max(500).optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.state === "continue" && !value.nextAction) {
+      context.addIssue({
+        code: "custom",
+        message: "nextAction is required to continue focus",
+        path: ["nextAction"],
+      });
+    }
+  });
+
 export const ContextPacketSchema = z.object({
   outcomeId: z.uuid(),
   title: z.string(),
   desiredOutcome: z.string(),
   context: z.string(),
   constraints: z.string(),
+  nextAction: z.string(),
+  lastProgressNote: z.string(),
   today: LocalDateSchema,
   permissions: z.array(AiPermissionSchema),
   instruction: z.string(),
@@ -115,6 +142,8 @@ export type TodayView = z.infer<typeof TodayViewSchema>;
 export type CreateOutcomeInput = z.infer<typeof CreateOutcomeInputSchema>;
 export type UpdateOutcomeInput = z.infer<typeof UpdateOutcomeInputSchema>;
 export type OutcomeDecisionInput = z.infer<typeof OutcomeDecisionInputSchema>;
+export type StartFocusInput = z.infer<typeof StartFocusInputSchema>;
+export type ProgressCheckInInput = z.infer<typeof ProgressCheckInInputSchema>;
 export type ContextPacket = z.infer<typeof ContextPacketSchema>;
 export type CloseDayResult = z.infer<typeof CloseDayResultSchema>;
 export type AiPermission = z.infer<typeof AiPermissionSchema>;
@@ -140,6 +169,20 @@ export class UnresolvedDailyOutcomesError extends Error {
   }
 }
 
+export class OutcomeNotActionableError extends Error {
+  constructor() {
+    super("Only a planned outcome in an open Daily Contract can be focused.");
+    this.name = "OutcomeNotActionableError";
+  }
+}
+
+export class OutcomeNotFocusedError extends Error {
+  constructor() {
+    super("Start focus on this outcome before recording progress.");
+    this.name = "OutcomeNotFocusedError";
+  }
+}
+
 export function assertDailyOutcomeCapacity(outcomeCount: number): void {
   if (outcomeCount >= MAX_DAILY_OUTCOMES) {
     throw new DailyOutcomeLimitError();
@@ -159,6 +202,8 @@ export function buildContextPacket(outcome: Outcome, today: LocalDate): ContextP
     desiredOutcome: outcome.desiredOutcome,
     context: outcome.context,
     constraints: outcome.constraints,
+    nextAction: outcome.nextAction,
+    lastProgressNote: outcome.lastProgressNote,
     today,
     permissions: outcome.aiPermissions,
     instruction:

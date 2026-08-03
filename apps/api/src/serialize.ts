@@ -12,6 +12,9 @@ type ContractRow = typeof schema.dailyContracts.$inferSelect;
 export function serializeOutcome(row: OutcomeRow) {
   return OutcomeSchema.parse({
     ...row,
+    focusStartedAt: row.focusStartedAt?.toISOString() ?? null,
+    lastProgressAt: row.lastProgressAt?.toISOString() ?? null,
+    blockedAt: row.blockedAt?.toISOString() ?? null,
     completedAt: row.completedAt?.toISOString() ?? null,
     releasedAt: row.releasedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),

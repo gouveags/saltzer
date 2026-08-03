@@ -8,6 +8,8 @@ import {
   type Outcome,
   type OutcomeDecisionInput,
   OutcomeSchema,
+  type ProgressCheckInInput,
+  type StartFocusInput,
   type TodayView,
   TodayViewSchema,
   type UpdateOutcomeInput,
@@ -65,6 +67,22 @@ export class SaltzerClient {
   async updateOutcome(outcomeId: string, input: UpdateOutcomeInput): Promise<Outcome> {
     const data = await this.request(`/v1/outcomes/${outcomeId}`, {
       method: "PATCH",
+      body: JSON.stringify(input),
+    });
+    return OutcomeSchema.parse(data);
+  }
+
+  async startFocus(outcomeId: string, input: StartFocusInput): Promise<Outcome> {
+    const data = await this.request(`/v1/outcomes/${outcomeId}/focus`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    return OutcomeSchema.parse(data);
+  }
+
+  async checkInProgress(outcomeId: string, input: ProgressCheckInInput): Promise<Outcome> {
+    const data = await this.request(`/v1/outcomes/${outcomeId}/progress`, {
+      method: "POST",
       body: JSON.stringify(input),
     });
     return OutcomeSchema.parse(data);

@@ -27,8 +27,10 @@ describe("Saltzer MCP server", () => {
       addOutcome: vi.fn(),
       addScheduledToDay: vi.fn(),
       closeDay: vi.fn(async (date) => ({ localDate: date, status: "closed" }) as never),
+      checkInProgress: vi.fn(async () => ({ id: outcomeId }) as never),
       contextPacket: vi.fn(),
       decideOutcome: vi.fn(async () => ({ id: outcomeId }) as never),
+      startFocus: vi.fn(async () => ({ id: outcomeId }) as never),
     };
   }
 
@@ -44,6 +46,8 @@ describe("Saltzer MCP server", () => {
       "move_outcome_to_tomorrow",
       "schedule_outcome",
       "add_scheduled_outcome_to_day",
+      "start_focus",
+      "record_progress",
       "close_daily_contract",
       "get_context_packet",
     ]);
@@ -75,5 +79,33 @@ describe("Saltzer MCP server", () => {
       decision: "tomorrow",
     });
     expect(result.isError).not.toBe(true);
+  });
+
+  it("lets an agent advance the user's active outcome without choosing it", async () => {
+    const implementation = fakeClient();
+    const protocolClient = await connect(implementation);
+
+    await protocolClient.callTool({
+      name: "start_focus",
+      arguments: { id: outcomeId, nextAction: "Open the failing trace" },
+    });
+    await protocolClient.callTool({
+      name: "record_progress",
+      arguments: {
+        id: outcomeId,
+        state: "continue",
+        note: "Found the failing hop",
+        nextAction: "Add the regression test",
+      },
+    });
+
+    expect(implementation.startFocus).toHaveBeenCalledWith(outcomeId, {
+      nextAction: "Open the failing trace",
+    });
+    expect(implementation.checkInProgress).toHaveBeenCalledWith(outcomeId, {
+      state: "continue",
+      note: "Found the failing hop",
+      nextAction: "Add the regression test",
+    });
   });
 });

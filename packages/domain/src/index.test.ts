@@ -7,6 +7,8 @@ import {
   MAX_DAILY_OUTCOMES,
   nextLocalDate,
   OutcomeDecisionInputSchema,
+  ProgressCheckInInputSchema,
+  StartFocusInputSchema,
 } from "./index.js";
 
 describe("Daily Contract rules", () => {
@@ -30,6 +32,31 @@ describe("Daily Contract rules", () => {
   it("advances dates across month and year boundaries", () => {
     expect(nextLocalDate("2026-12-31")).toBe("2027-01-01");
   });
+
+  it("requires a concrete next move before focus begins", () => {
+    expect(StartFocusInputSchema.safeParse({ nextAction: "" }).success).toBe(false);
+    expect(StartFocusInputSchema.safeParse({ nextAction: "Open the failing trace" }).success).toBe(
+      true,
+    );
+  });
+
+  it("requires the next move when a progress check-in continues focus", () => {
+    expect(
+      ProgressCheckInInputSchema.safeParse({ state: "continue", note: "Found the failing hop" })
+        .success,
+    ).toBe(false);
+    expect(
+      ProgressCheckInInputSchema.safeParse({
+        state: "continue",
+        note: "Found the failing hop",
+        nextAction: "Add the regression test",
+      }).success,
+    ).toBe(true);
+    expect(
+      ProgressCheckInInputSchema.safeParse({ state: "blocked", note: "Waiting for approval" })
+        .success,
+    ).toBe(true);
+  });
 });
 
 describe("AI context packets", () => {
@@ -42,11 +69,16 @@ describe("AI context packets", () => {
         desiredOutcome: "A concise draft ready for review",
         context: "Launch is Thursday.",
         constraints: "Do not publish.",
+        nextAction: "Draft the opening paragraph",
         estimateMinutes: 40,
         aiPermissions: ["read_context", "draft"],
         status: "planned",
         scheduledFor: null,
         position: 0,
+        focusStartedAt: "2026-08-03T12:05:00.000Z",
+        lastProgressNote: "Reviewed the source material",
+        lastProgressAt: "2026-08-03T12:04:00.000Z",
+        blockedAt: null,
         completedAt: null,
         releasedAt: null,
         createdAt: "2026-08-03T12:00:00.000Z",
@@ -59,6 +91,8 @@ describe("AI context packets", () => {
       title: "Prepare launch note",
       context: "Launch is Thursday.",
       constraints: "Do not publish.",
+      nextAction: "Draft the opening paragraph",
+      lastProgressNote: "Reviewed the source material",
       permissions: ["read_context", "draft"],
     });
     expect(packet.instruction).toContain("ask before any external side effect");
