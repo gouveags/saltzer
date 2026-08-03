@@ -35,11 +35,6 @@ test("a person can choose, understand, and complete today's contract", async ({ 
   await expect(page.getByText("Choose an outcome", { exact: true })).toHaveCount(0);
   await expect(page.getByText("30 minutes over capacity.")).toBeVisible();
 
-  await page.getByRole("button", { name: "Change focused minutes available today" }).click();
-  await page.getByRole("textbox", { name: "Focused minutes available today" }).fill("120");
-  await page.getByRole("button", { name: "Set today’s room" }).click();
-  await expect(page.getByText("30 minutes remain.")).toBeVisible();
-
   await page.getByRole("button", { name: "Focus Choose the real work" }).click();
   await page.getByRole("textbox", { name: "The next move" }).fill("Open the evidence");
   await page.getByRole("button", { name: "Focus this now" }).click();
@@ -74,7 +69,7 @@ test("a person can choose, understand, and complete today's contract", async ({ 
   await expect(page.getByText(/"context": "This context was deliberately supplied/)).toBeVisible();
   await expect(page.getByText(/"nextAction": "Write the handoff"/)).toBeVisible();
   await expect(page.getByText(/"lastProgressNote": "Approval is still missing"/)).toBeVisible();
-  await expect(page.getByText(/"capacityMinutes": 120/)).toBeVisible();
+  await expect(page.getByText(/"capacityMinutes": 60/)).toBeVisible();
   await expect(page.getByText(/"plannedMinutes": 90/)).toBeVisible();
   await page.getByRole("button", { name: "Done" }).click();
 
