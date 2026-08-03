@@ -1,0 +1,47 @@
+{
+  "name": "@saltzer/product",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "android": "expo start --android",
+    "build": "expo export --platform web",
+    "dev": "expo start",
+    "ios": "expo start --ios",
+    "start": "expo start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@better-auth/expo": "1.6.25",
+    "@expo-google-fonts/azeret-mono": "0.4.1",
+    "@expo-google-fonts/newsreader": "0.4.1",
+    "@saltzer/domain": "workspace:*",
+    "@saltzer/sdk": "workspace:*",
+    "better-auth": "1.6.25",
+    "expo": "~57.0.9",
+    "expo-constants": "~57.0.8",
+    "expo-font": "~57.0.1",
+    "expo-linking": "~57.0.4",
+    "expo-network": "~57.0.1",
+    "expo-router": "~57.0.9",
+    "expo-secure-store": "~57.0.1",
+    "expo-splash-screen": "~57.0.5",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.2",
+    "expo-web-browser": "~57.0.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3",
+    "vitest": "4.1.10"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "saltzer",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "audit": "pnpm audit --prod --audit-level high",
+    "check": "biome check . && turbo run typecheck",
+    "check:fix": "biome check --write .",
+    "dev": "turbo run dev --parallel",
+    "test": "turbo run test",
+    "db:generate": "corepack pnpm --filter @saltzer/database generate",
+    "db:migrate": "corepack pnpm --filter @saltzer/database migrate",
+    "db:up": "podman compose up -d postgres || docker compose up -d postgres",
+    "db:down": "podman compose down || docker compose down"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.6",
+    "turbo": "2.10.8",
+    "typescript": "5.9.3"
+  }
+}
