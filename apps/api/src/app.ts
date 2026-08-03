@@ -17,6 +17,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { secureHeaders } from "hono/secure-headers";
 import type { SaltzerEnv } from "./env.js";
 import { serializeOutcome, serializeToday } from "./serialize.js";
 
@@ -55,6 +56,7 @@ export function createSaltzerApp(env: SaltzerEnv) {
   const app = new OpenAPIHono<{ Variables: Variables }>();
 
   app.use(logger());
+  app.use("*", secureHeaders());
   app.use(
     "*",
     cors({

@@ -122,6 +122,8 @@ describeWithDatabase("Saltzer API integration", () => {
       headers: { Authorization: `Bearer ${token}`, Origin: origin },
     });
     expect(tokenToday.status).toBe(200);
+    expect(tokenToday.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(tokenToday.headers.get("strict-transport-security")).toContain("max-age=");
     await expect(tokenToday.json()).resolves.toMatchObject({
       contract: {
         outcomes: expect.arrayContaining([expect.objectContaining({ title: "Outcome 1" })]),
