@@ -10,6 +10,10 @@ test("a person can choose, understand, and complete today's contract", async ({ 
   await page.getByRole("button", { name: "Create my day" }).click();
   await expect(page.getByText("Good morning, E2E.")).toBeVisible();
 
+  await page.getByRole("textbox", { name: "Focused minutes available today" }).fill("60");
+  await page.getByRole("button", { name: "Set today’s room" }).click();
+  await expect(page.getByText("60 minutes remain.")).toBeVisible();
+
   const outcomes = [
     ["Choose the real work", "Three clear results are visible"],
     ["Share only useful context", "The permission packet is inspectable"],
@@ -29,6 +33,12 @@ test("a person can choose, understand, and complete today's contract", async ({ 
 
   await expect(page.getByText("3 OF 3 CHOSEN")).toBeVisible();
   await expect(page.getByText("Choose an outcome", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("30 minutes over capacity.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Change focused minutes available today" }).click();
+  await page.getByRole("textbox", { name: "Focused minutes available today" }).fill("120");
+  await page.getByRole("button", { name: "Set today’s room" }).click();
+  await expect(page.getByText("30 minutes remain.")).toBeVisible();
 
   await page.getByRole("button", { name: "Focus Choose the real work" }).click();
   await page.getByRole("textbox", { name: "The next move" }).fill("Open the evidence");
@@ -64,6 +74,8 @@ test("a person can choose, understand, and complete today's contract", async ({ 
   await expect(page.getByText(/"context": "This context was deliberately supplied/)).toBeVisible();
   await expect(page.getByText(/"nextAction": "Write the handoff"/)).toBeVisible();
   await expect(page.getByText(/"lastProgressNote": "Approval is still missing"/)).toBeVisible();
+  await expect(page.getByText(/"capacityMinutes": 120/)).toBeVisible();
+  await expect(page.getByText(/"plannedMinutes": 90/)).toBeVisible();
   await page.getByRole("button", { name: "Done" }).click();
 
   await page.getByRole("button", { name: "Use light theme" }).click();

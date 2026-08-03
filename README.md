@@ -10,7 +10,7 @@ Saltzer is open-source software licensed under the AGPL-3.0. The product is in
 active development. The Daily Contract and its focus/progress loop are shared
 by the web, native, CLI, and MCP clients.
 
-![Saltzer Daily Contract](./docs/screenshots/02-daily-contract.png)
+![Saltzer Morning Reality Check](./docs/screenshots/vision-44-morning-reality-check.png)
 
 ## Product principles
 
@@ -20,6 +20,8 @@ by the web, native, CLI, and MCP clients.
 - Strong defaults beat settings. Speed, restraint, and reliability are features.
 - AI is optional and provider-neutral. Saltzer remains useful without a model.
 - Healthy productivity matters more than maximizing completed task counts.
+- Capacity is explicit, unknown work stays unknown, and recent behavior informs
+  the morning without becoming a guilt score.
 - Forward motion is explicit: one focus, one concrete next move, then an honest
   progress, pause, or blocker check-in.
 

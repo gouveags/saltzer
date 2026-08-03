@@ -28,6 +28,7 @@ import { DetailSheet } from "@/components/detail-sheet";
 import { FocusSheet } from "@/components/focus-sheet";
 import { OutcomeCard } from "@/components/outcome-card";
 import { OutcomeEditor } from "@/components/outcome-editor";
+import { RealityCheck } from "@/components/reality-check";
 import { darkTheme, fonts, lightTheme } from "@/constants/theme";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
@@ -99,6 +100,10 @@ export default function HomeScreen() {
     if (!saved) return;
     setEditorOpen(false);
     setEditing(null);
+  }
+
+  async function saveCapacity(capacityMinutes: number | null) {
+    return mutate(() => api.setDailyCapacity(localDate, { capacityMinutes }));
   }
 
   async function startFocus(input: StartFocusInput) {
@@ -327,6 +332,16 @@ export default function HomeScreen() {
                 <Text style={[styles.errorClose, { color: theme.ink }]}>×</Text>
               </Pressable>
             </View>
+          )}
+
+          {view && (
+            <RealityCheck
+              check={view.realityCheck}
+              closed={contractClosed}
+              onSave={saveCapacity}
+              pending={mutationPending}
+              theme={theme}
+            />
           )}
 
           {!contractClosed && (view?.scheduledCandidates.length ?? 0) > 0 && (

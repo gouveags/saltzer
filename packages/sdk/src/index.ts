@@ -4,11 +4,14 @@ import {
   type ContextPacket,
   ContextPacketSchema,
   type CreateOutcomeInput,
+  type DailyCapacity,
+  DailyCapacitySchema,
   type LocalDate,
   type Outcome,
   type OutcomeDecisionInput,
   OutcomeSchema,
   type ProgressCheckInInput,
+  type SetDailyCapacityInput,
   type StartFocusInput,
   type TodayView,
   TodayViewSchema,
@@ -57,6 +60,17 @@ export class SaltzerClient {
       body: JSON.stringify(input),
     });
     return OutcomeSchema.parse(data);
+  }
+
+  async setDailyCapacity(
+    localDate: LocalDate,
+    input: SetDailyCapacityInput,
+  ): Promise<DailyCapacity> {
+    const data = await this.request(`/v1/contracts/${localDate}/capacity`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
+    return DailyCapacitySchema.parse(data);
   }
 
   async closeDay(localDate: LocalDate): Promise<CloseDayResult> {

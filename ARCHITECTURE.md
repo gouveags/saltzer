@@ -54,6 +54,13 @@ or a captured blocker. Starting a different focus clears the previous one in the
 same transaction. Progress events preserve the behavioral history while the
 outcome row keeps today's read model fast and simple.
 
+Daily capacity is an explicit value on the contract, not an inferred promise.
+The domain combines it with current estimates and a seven-day window of durable
+decision events to produce the Morning Reality Check. The same reduced day
+context enters permissioned AI packets, preventing the human and an assistant
+from reasoning about different plans. The event query is tenant- and date-bound
+and backed by a `(user_id, from_date)` index.
+
 ## Boundary rules
 
 1. The server enforces the three-outcome limit transactionally.

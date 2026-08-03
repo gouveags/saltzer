@@ -25,6 +25,12 @@ export const LocalDateSchema = z
 export const OutcomeStatusSchema = z.enum(["planned", "completed", "released"]);
 export const ContractStatusSchema = z.enum(["open", "closed"]);
 export const AiPermissionSchema = z.enum(["read_context", "suggest", "draft"]);
+export const DailyRealityStatusSchema = z.enum([
+  "unset",
+  "within_capacity",
+  "at_capacity",
+  "over_capacity",
+]);
 
 export const OutcomeSchema = z.object({
   id: z.uuid(),
@@ -60,10 +66,33 @@ export const DailyContractSchema = z.object({
   outcomes: z.array(OutcomeSchema),
 });
 
+export const DailyRealityCheckSchema = z.object({
+  localDate: LocalDateSchema,
+  capacityMinutes: z.number().int().min(15).max(1_440).nullable(),
+  plannedMinutes: z.number().int().nonnegative(),
+  unestimatedOutcomes: z.number().int().nonnegative(),
+  remainingMinutes: z.number().int().nullable(),
+  status: DailyRealityStatusSchema,
+  due: z.object({
+    count: z.number().int().nonnegative(),
+    estimatedMinutes: z.number().int().nonnegative(),
+    unestimatedOutcomes: z.number().int().nonnegative(),
+  }),
+  recent: z.object({
+    lookbackDays: z.literal(7),
+    daysReviewed: z.number().int().min(0).max(7),
+    completed: z.number().int().nonnegative(),
+    released: z.number().int().nonnegative(),
+    rescheduled: z.number().int().nonnegative(),
+    completionRate: z.number().int().min(0).max(100).nullable(),
+  }),
+});
+
 export const TodayViewSchema = z.object({
   localDate: LocalDateSchema,
   contract: DailyContractSchema.nullable(),
   scheduledCandidates: z.array(OutcomeSchema),
+  realityCheck: DailyRealityCheckSchema,
 });
 
 export const CloseDayResultSchema = z.object({
@@ -79,6 +108,15 @@ export const CreateOutcomeInputSchema = z.object({
   constraints: z.string().trim().max(5_000).default(""),
   estimateMinutes: z.number().int().min(5).max(1_440).nullable().default(null),
   aiPermissions: z.array(AiPermissionSchema).default(["read_context", "suggest"]),
+});
+
+export const SetDailyCapacityInputSchema = z.object({
+  capacityMinutes: z.number().int().min(15).max(1_440).nullable(),
+});
+
+export const DailyCapacitySchema = z.object({
+  localDate: LocalDateSchema,
+  capacityMinutes: z.number().int().min(15).max(1_440).nullable(),
 });
 
 export const UpdateOutcomeInputSchema = CreateOutcomeInputSchema.partial().refine(
@@ -122,6 +160,13 @@ export const ProgressCheckInInputSchema = z
     }
   });
 
+export const DayContextSchema = z.object({
+  capacityMinutes: z.number().int().min(15).max(1_440).nullable(),
+  plannedMinutes: z.number().int().nonnegative(),
+  remainingMinutes: z.number().int().nullable(),
+  status: DailyRealityStatusSchema,
+});
+
 export const ContextPacketSchema = z.object({
   outcomeId: z.uuid(),
   title: z.string(),
@@ -131,6 +176,7 @@ export const ContextPacketSchema = z.object({
   nextAction: z.string(),
   lastProgressNote: z.string(),
   today: LocalDateSchema,
+  day: DayContextSchema,
   permissions: z.array(AiPermissionSchema),
   instruction: z.string(),
 });
@@ -139,7 +185,11 @@ export type LocalDate = z.infer<typeof LocalDateSchema>;
 export type Outcome = z.infer<typeof OutcomeSchema>;
 export type DailyContract = z.infer<typeof DailyContractSchema>;
 export type TodayView = z.infer<typeof TodayViewSchema>;
+export type DailyRealityCheck = z.infer<typeof DailyRealityCheckSchema>;
+export type DailyCapacity = z.infer<typeof DailyCapacitySchema>;
+export type DayContext = z.infer<typeof DayContextSchema>;
 export type CreateOutcomeInput = z.infer<typeof CreateOutcomeInputSchema>;
+export type SetDailyCapacityInput = z.infer<typeof SetDailyCapacityInputSchema>;
 export type UpdateOutcomeInput = z.infer<typeof UpdateOutcomeInputSchema>;
 export type OutcomeDecisionInput = z.infer<typeof OutcomeDecisionInputSchema>;
 export type StartFocusInput = z.infer<typeof StartFocusInputSchema>;
@@ -189,13 +239,80 @@ export function assertDailyOutcomeCapacity(outcomeCount: number): void {
   }
 }
 
-export function nextLocalDate(localDate: LocalDate): LocalDate {
+export function shiftLocalDate(localDate: LocalDate, days: number): LocalDate {
   const date = new Date(`${localDate}T00:00:00.000Z`);
-  date.setUTCDate(date.getUTCDate() + 1);
+  date.setUTCDate(date.getUTCDate() + days);
   return LocalDateSchema.parse(date.toISOString().slice(0, 10));
 }
 
-export function buildContextPacket(outcome: Outcome, today: LocalDate): ContextPacket {
+export function nextLocalDate(localDate: LocalDate): LocalDate {
+  return shiftLocalDate(localDate, 1);
+}
+
+type DailyRealityCheckInput = {
+  localDate: LocalDate;
+  capacityMinutes: number | null;
+  outcomes: Array<number | null>;
+  scheduledCandidates: Array<number | null>;
+  recentDecisions: Array<{
+    date: LocalDate;
+    decision: "completed" | "released" | "rescheduled";
+  }>;
+};
+
+export function buildDailyRealityCheck(input: DailyRealityCheckInput): DailyRealityCheck {
+  const plannedMinutes = input.outcomes.reduce<number>(
+    (total, estimate) => total + (estimate ?? 0),
+    0,
+  );
+  const remainingMinutes =
+    input.capacityMinutes === null ? null : input.capacityMinutes - plannedMinutes;
+  const status =
+    remainingMinutes === null
+      ? "unset"
+      : remainingMinutes < 0
+        ? "over_capacity"
+        : remainingMinutes === 0
+          ? "at_capacity"
+          : "within_capacity";
+  const completed = input.recentDecisions.filter(({ decision }) => decision === "completed").length;
+  const released = input.recentDecisions.filter(({ decision }) => decision === "released").length;
+  const rescheduled = input.recentDecisions.filter(
+    ({ decision }) => decision === "rescheduled",
+  ).length;
+  const totalDecisions = completed + released + rescheduled;
+
+  return DailyRealityCheckSchema.parse({
+    localDate: input.localDate,
+    capacityMinutes: input.capacityMinutes,
+    plannedMinutes,
+    unestimatedOutcomes: input.outcomes.filter((estimate) => estimate === null).length,
+    remainingMinutes,
+    status,
+    due: {
+      count: input.scheduledCandidates.length,
+      estimatedMinutes: input.scheduledCandidates.reduce<number>(
+        (total, estimate) => total + (estimate ?? 0),
+        0,
+      ),
+      unestimatedOutcomes: input.scheduledCandidates.filter((estimate) => estimate === null).length,
+    },
+    recent: {
+      lookbackDays: 7,
+      daysReviewed: new Set(input.recentDecisions.map(({ date }) => date)).size,
+      completed,
+      released,
+      rescheduled,
+      completionRate: totalDecisions === 0 ? null : Math.round((completed / totalDecisions) * 100),
+    },
+  });
+}
+
+export function buildContextPacket(
+  outcome: Outcome,
+  today: LocalDate,
+  day: DayContext,
+): ContextPacket {
   return ContextPacketSchema.parse({
     outcomeId: outcome.id,
     title: outcome.title,
@@ -205,6 +322,7 @@ export function buildContextPacket(outcome: Outcome, today: LocalDate): ContextP
     nextAction: outcome.nextAction,
     lastProgressNote: outcome.lastProgressNote,
     today,
+    day,
     permissions: outcome.aiPermissions,
     instruction:
       "Help advance this outcome using only the supplied context and permissions. " +

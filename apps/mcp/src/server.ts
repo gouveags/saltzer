@@ -12,6 +12,7 @@ export type SaltzerToolClient = Pick<
   | "contextPacket"
   | "decideOutcome"
   | "startFocus"
+  | "setDailyCapacity"
   | "today"
 >;
 
@@ -29,6 +30,20 @@ export function createMcpServer(client: SaltzerToolClient) {
       inputSchema: { date: LocalDateSchema },
     },
     async ({ date }) => text(await client.today(date)),
+  );
+
+  server.registerTool(
+    "set_daily_capacity",
+    {
+      description:
+        "Set the minutes the user actually has available before judging whether today's plan fits, or use null to clear an earlier answer.",
+      inputSchema: {
+        date: LocalDateSchema,
+        capacityMinutes: z.number().int().min(15).max(1_440).nullable(),
+      },
+    },
+    async ({ date, capacityMinutes }) =>
+      text(await client.setDailyCapacity(date, { capacityMinutes })),
   );
 
   server.registerTool(

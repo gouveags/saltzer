@@ -1,6 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
 import { SaltzerClient } from "./index.js";
 
+const emptyRealityCheck = {
+  localDate: "2026-08-03",
+  capacityMinutes: null,
+  plannedMinutes: 0,
+  unestimatedOutcomes: 0,
+  remainingMinutes: null,
+  status: "unset",
+  due: { count: 0, estimatedMinutes: 0, unestimatedOutcomes: 0 },
+  recent: {
+    lookbackDays: 7,
+    daysReviewed: 0,
+    completed: 0,
+    released: 0,
+    rescheduled: 0,
+    completionRate: null,
+  },
+};
+
 describe("SaltzerClient", () => {
   it("preserves the browser receiver when it uses the global fetch implementation", async () => {
     const originalFetch = globalThis.fetch;
@@ -8,7 +26,12 @@ describe("SaltzerClient", () => {
       if (this !== globalThis) throw new TypeError("Illegal invocation");
       return Promise.resolve(
         new Response(
-          JSON.stringify({ localDate: "2026-08-03", contract: null, scheduledCandidates: [] }),
+          JSON.stringify({
+            localDate: "2026-08-03",
+            contract: null,
+            scheduledCandidates: [],
+            realityCheck: emptyRealityCheck,
+          }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         ),
       );
@@ -35,6 +58,7 @@ describe("SaltzerClient", () => {
           localDate: "2026-08-03",
           contract: null,
           scheduledCandidates: [],
+          realityCheck: emptyRealityCheck,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );
@@ -96,6 +120,30 @@ describe("SaltzerClient", () => {
     expect(request).toHaveBeenCalledWith(
       "https://saltzer.example/v1/contracts/2026-08-03/close",
       expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("sets the room available for a local day", async () => {
+    const request = vi.fn(async () =>
+      Promise.resolve(
+        new Response(JSON.stringify({ localDate: "2026-08-03", capacityMinutes: 180 }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    const client = new SaltzerClient({
+      baseUrl: "https://saltzer.example",
+      fetch: request as typeof fetch,
+    });
+
+    await expect(client.setDailyCapacity("2026-08-03", { capacityMinutes: 180 })).resolves.toEqual({
+      localDate: "2026-08-03",
+      capacityMinutes: 180,
+    });
+    expect(request).toHaveBeenCalledWith(
+      "https://saltzer.example/v1/contracts/2026-08-03/capacity",
+      expect.objectContaining({ method: "PATCH", body: '{"capacityMinutes":180}' }),
     );
   });
 

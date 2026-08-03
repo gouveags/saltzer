@@ -96,6 +96,37 @@ describeWithDatabase("DailyRepository integration", () => {
     await expect(
       repository.addScheduledToDay(userId, day.outcomes[2]?.id ?? "", "2026-08-03"),
     ).rejects.toBeInstanceOf(DailyContractClosedError);
+    await expect(
+      repository.setDailyCapacity(userId, "2026-08-03", { capacityMinutes: 120 }),
+    ).rejects.toBeInstanceOf(DailyContractClosedError);
+  });
+
+  it("keeps capacity and recent behavior scoped to the user and local day", async () => {
+    const capacity = await repository.setDailyCapacity(userId, "2026-08-05", {
+      capacityMinutes: 150,
+    });
+    expect(capacity).toMatchObject({ localDate: "2026-08-05", capacityMinutes: 150 });
+
+    const day = await repository.getDailyContract(userId, "2026-08-05");
+    expect(day.contract).toMatchObject({ capacityMinutes: 150 });
+    expect(day.recentDecisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ date: "2026-08-03", decision: "completed" }),
+        expect.objectContaining({ date: "2026-08-03", decision: "released" }),
+        expect.objectContaining({ date: "2026-08-03", decision: "rescheduled" }),
+      ]),
+    );
+
+    const strangerId = `integration-${randomUUID()}`;
+    await db.insert(user).values({
+      id: strangerId,
+      name: "Other Person",
+      email: `${strangerId}@saltzer.test`,
+    });
+    const strangerDay = await repository.getDailyContract(strangerId, "2026-08-05");
+    expect(strangerDay.contract).toBeNull();
+    expect(strangerDay.recentDecisions).toEqual([]);
+    await db.delete(user).where(eq(user.id, strangerId));
   });
 
   it("keeps one active focus and records honest progress transitions", async () => {

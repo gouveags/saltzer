@@ -9,11 +9,13 @@ import {
   OutcomeNotActionableError,
   OutcomeNotFocusedError,
   type ProgressCheckInInput,
+  type SetDailyCapacityInput,
   type StartFocusInput,
+  shiftLocalDate,
   UnresolvedDailyOutcomesError,
   type UpdateOutcomeInput,
 } from "@saltzer/domain";
-import { and, asc, count, eq, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, isNull, lt, lte, sql } from "drizzle-orm";
 import type { Database } from "./client.js";
 import { apiTokens, dailyContracts, outcomeEvents, outcomes } from "./schema.js";
 
@@ -46,25 +48,42 @@ export class DailyRepository {
   }
 
   async getDailyContract(userId: string, localDate: LocalDate) {
-    const contract = await this.db.query.dailyContracts.findFirst({
-      where: and(eq(dailyContracts.userId, userId), eq(dailyContracts.localDate, localDate)),
-    });
-
-    const scheduledCandidates = await this.db
-      .select()
-      .from(outcomes)
-      .where(
-        and(
-          eq(outcomes.userId, userId),
-          eq(outcomes.status, "planned"),
-          isNull(outcomes.contractId),
-          lte(outcomes.scheduledFor, localDate),
+    const [contract, scheduledCandidates, recentDecisionRows] = await Promise.all([
+      this.db.query.dailyContracts.findFirst({
+        where: and(eq(dailyContracts.userId, userId), eq(dailyContracts.localDate, localDate)),
+      }),
+      this.db
+        .select()
+        .from(outcomes)
+        .where(
+          and(
+            eq(outcomes.userId, userId),
+            eq(outcomes.status, "planned"),
+            isNull(outcomes.contractId),
+            lte(outcomes.scheduledFor, localDate),
+          ),
+        )
+        .orderBy(asc(outcomes.scheduledFor), asc(outcomes.createdAt)),
+      this.db
+        .select({ date: outcomeEvents.fromDate, decision: outcomeEvents.type })
+        .from(outcomeEvents)
+        .where(
+          and(
+            eq(outcomeEvents.userId, userId),
+            inArray(outcomeEvents.type, ["completed", "released", "rescheduled"]),
+            gte(outcomeEvents.fromDate, shiftLocalDate(localDate, -7)),
+            lt(outcomeEvents.fromDate, localDate),
+          ),
         ),
-      )
-      .orderBy(asc(outcomes.scheduledFor), asc(outcomes.createdAt));
+    ]);
+    const recentDecisions = recentDecisionRows.flatMap(({ date, decision }) =>
+      date && (decision === "completed" || decision === "released" || decision === "rescheduled")
+        ? [{ date, decision }]
+        : [],
+    );
 
     if (!contract) {
-      return { contract: null, outcomes: [], scheduledCandidates };
+      return { contract: null, outcomes: [], scheduledCandidates, recentDecisions };
     }
 
     const contractOutcomes = await this.db
@@ -73,7 +92,28 @@ export class DailyRepository {
       .where(eq(outcomes.contractId, contract.id))
       .orderBy(asc(outcomes.position), asc(outcomes.createdAt));
 
-    return { contract, outcomes: contractOutcomes, scheduledCandidates };
+    return { contract, outcomes: contractOutcomes, scheduledCandidates, recentDecisions };
+  }
+
+  async setDailyCapacity(userId: string, localDate: LocalDate, input: SetDailyCapacityInput) {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:${localDate}`}, 0))`,
+      );
+
+      const [contract] = await tx
+        .insert(dailyContracts)
+        .values({ userId, localDate, capacityMinutes: input.capacityMinutes })
+        .onConflictDoUpdate({
+          target: [dailyContracts.userId, dailyContracts.localDate],
+          set: { capacityMinutes: input.capacityMinutes, updatedAt: new Date() },
+        })
+        .returning();
+
+      if (!contract) throw new Error("Unable to set daily capacity.");
+      if (contract.status === "closed") throw new DailyContractClosedError();
+      return contract;
+    });
   }
 
   async createOutcome(userId: string, localDate: LocalDate, input: CreateOutcomeInput) {

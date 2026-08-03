@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   assertDailyOutcomeCapacity,
   buildContextPacket,
+  buildDailyRealityCheck,
   DailyOutcomeLimitError,
   LocalDateSchema,
   MAX_DAILY_OUTCOMES,
   nextLocalDate,
   OutcomeDecisionInputSchema,
   ProgressCheckInInputSchema,
+  SetDailyCapacityInputSchema,
   StartFocusInputSchema,
+  shiftLocalDate,
 } from "./index.js";
 
 describe("Daily Contract rules", () => {
@@ -31,6 +34,14 @@ describe("Daily Contract rules", () => {
 
   it("advances dates across month and year boundaries", () => {
     expect(nextLocalDate("2026-12-31")).toBe("2027-01-01");
+    expect(shiftLocalDate("2026-01-01", -7)).toBe("2025-12-25");
+  });
+
+  it("keeps a daily capacity explicit and bounded", () => {
+    expect(SetDailyCapacityInputSchema.safeParse({ capacityMinutes: 120 }).success).toBe(true);
+    expect(SetDailyCapacityInputSchema.safeParse({ capacityMinutes: null }).success).toBe(true);
+    expect(SetDailyCapacityInputSchema.safeParse({ capacityMinutes: 0 }).success).toBe(false);
+    expect(SetDailyCapacityInputSchema.safeParse({ capacityMinutes: 1_441 }).success).toBe(false);
   });
 
   it("requires a concrete next move before focus begins", () => {
@@ -56,6 +67,55 @@ describe("Daily Contract rules", () => {
       ProgressCheckInInputSchema.safeParse({ state: "blocked", note: "Waiting for approval" })
         .success,
     ).toBe(true);
+  });
+});
+
+describe("daily reality checks", () => {
+  it("shows whether today's commitments fit the room a person actually has", () => {
+    const check = buildDailyRealityCheck({
+      localDate: "2026-08-03",
+      capacityMinutes: 180,
+      outcomes: [60, 90, null],
+      scheduledCandidates: [30, null],
+      recentDecisions: [
+        { date: "2026-08-01", decision: "completed" },
+        { date: "2026-08-01", decision: "released" },
+        { date: "2026-08-02", decision: "completed" },
+        { date: "2026-08-02", decision: "rescheduled" },
+      ],
+    });
+
+    expect(check).toEqual({
+      localDate: "2026-08-03",
+      capacityMinutes: 180,
+      plannedMinutes: 150,
+      unestimatedOutcomes: 1,
+      remainingMinutes: 30,
+      status: "within_capacity",
+      due: { count: 2, estimatedMinutes: 30, unestimatedOutcomes: 1 },
+      recent: {
+        lookbackDays: 7,
+        daysReviewed: 2,
+        completed: 2,
+        released: 1,
+        rescheduled: 1,
+        completionRate: 50,
+      },
+    });
+  });
+
+  it("names an overloaded contract without pretending unestimated work is free", () => {
+    const check = buildDailyRealityCheck({
+      localDate: "2026-08-03",
+      capacityMinutes: 120,
+      outcomes: [90, 60],
+      scheduledCandidates: [],
+      recentDecisions: [],
+    });
+
+    expect(check.status).toBe("over_capacity");
+    expect(check.remainingMinutes).toBe(-30);
+    expect(check.recent.completionRate).toBeNull();
   });
 });
 
@@ -85,6 +145,12 @@ describe("AI context packets", () => {
         updatedAt: "2026-08-03T12:00:00.000Z",
       },
       "2026-08-03",
+      {
+        capacityMinutes: 180,
+        plannedMinutes: 150,
+        remainingMinutes: 30,
+        status: "within_capacity",
+      },
     );
 
     expect(packet).toMatchObject({
@@ -94,6 +160,12 @@ describe("AI context packets", () => {
       nextAction: "Draft the opening paragraph",
       lastProgressNote: "Reviewed the source material",
       permissions: ["read_context", "draft"],
+      day: {
+        capacityMinutes: 180,
+        plannedMinutes: 150,
+        remainingMinutes: 30,
+        status: "within_capacity",
+      },
     });
     expect(packet.instruction).toContain("ask before any external side effect");
   });
