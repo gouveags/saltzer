@@ -207,13 +207,13 @@ const styles = StyleSheet.create({
   content: { gap: 18, padding: 28, paddingBottom: 36 },
   kicker: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1.5 },
   title: { fontFamily: fonts.display, fontSize: 37, letterSpacing: -1.1 },
-  note: { fontFamily: fonts.serif, fontSize: 16, lineHeight: 23, marginBottom: 8, maxWidth: 520 },
+  note: { fontFamily: fonts.body, fontSize: 16, lineHeight: 23, marginBottom: 8, maxWidth: 520 },
   field: { gap: 7 },
   label: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1.1, textTransform: "uppercase" },
   input: {
     borderRadius: 3,
     borderWidth: 1,
-    fontFamily: fonts.serif,
+    fontFamily: fonts.body,
     fontSize: 17,
     minHeight: 48,
     paddingHorizontal: 14,
@@ -224,6 +224,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 14 },
   flex: { flex: 1 },
   minutes: { width: 110 },
-  error: { fontFamily: fonts.serif, fontSize: 14 },
+  error: { fontFamily: fonts.body, fontSize: 14 },
   actions: { alignItems: "center", flexDirection: "row", justifyContent: "flex-end", marginTop: 8 },
 });

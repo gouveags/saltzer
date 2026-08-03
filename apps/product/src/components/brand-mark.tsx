@@ -1,28 +1,36 @@
-import { StyleSheet, Text, View } from "react-native";
-import { fonts, type Theme } from "@/constants/theme";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { darkTheme, fonts, type Theme } from "@/constants/theme";
+import darkMark from "../../assets/images/saltzer-mark-dark.png";
+import lightMark from "../../assets/images/saltzer-mark-light.png";
 
-export function BrandMark({ theme, compact = false }: { theme: Theme; compact?: boolean }) {
+export function BrandMark({
+  theme,
+  compact = false,
+  decorative = false,
+  size = 40,
+}: {
+  theme: Theme;
+  compact?: boolean;
+  decorative?: boolean;
+  size?: number;
+}) {
+  const source = theme.background === darkTheme.background ? darkMark : lightMark;
+
   return (
     <View style={styles.row}>
-      <View style={[styles.seal, { borderColor: theme.ink }]}>
-        <Text style={[styles.sealText, { color: theme.ink }]}>S</Text>
-      </View>
-      {!compact && <Text style={[styles.name, { color: theme.ink }]}>Saltzer</Text>}
+      <Image
+        accessibilityLabel={compact && !decorative ? "Saltzer" : undefined}
+        accessible={compact && !decorative}
+        resizeMode="contain"
+        source={source}
+        style={{ height: size, width: size }}
+      />
+      {!compact && <Text style={[styles.name, { color: theme.ink }]}>saltzer</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: "center", flexDirection: "row", gap: 10 },
-  seal: {
-    alignItems: "center",
-    borderRadius: 99,
-    borderWidth: 1.5,
-    height: 34,
-    justifyContent: "center",
-    transform: [{ rotate: "-7deg" }],
-    width: 34,
-  },
-  sealText: { fontFamily: fonts.display, fontSize: 23, lineHeight: 29 },
-  name: { fontFamily: fonts.display, fontSize: 26, letterSpacing: -0.8 },
+  row: { alignItems: "center", flexDirection: "row", gap: 8 },
+  name: { fontFamily: fonts.display, fontSize: 27, letterSpacing: -0.9 },
 });

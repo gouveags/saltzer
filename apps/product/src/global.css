@@ -20,6 +20,10 @@ textarea {
   font: inherit;
 }
 
+input[id^="saltzer-auth-"]:focus {
+  outline: none;
+}
+
 ::selection {
   color: #f7f2e7;
   background: #1d211c;

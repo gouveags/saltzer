@@ -41,8 +41,9 @@ export const darkTheme: Theme = {
 };
 
 export const fonts = {
-  display: "Newsreader_600SemiBold",
-  serif: "Newsreader_400Regular",
-  serifMedium: "Newsreader_500Medium",
+  body: "FamiljenGrotesk_400Regular",
+  bodyItalic: "FamiljenGrotesk_400Regular_Italic",
+  bodyMedium: "FamiljenGrotesk_600SemiBold",
+  display: "FamiljenGrotesk_700Bold",
   mono: "AzeretMono_500Medium",
 } as const;

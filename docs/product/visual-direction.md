@@ -40,6 +40,23 @@ Any future inbox, calendar, area, or goal surface must earn its place by making
 today clearer. It may feed the Daily Contract; it may not turn Saltzer into a
 configurable productivity operating system.
 
+## Typography and interface voice
+
+Saltzer uses Familjen Grotesk for display and reading text. Its visible ink
+traps, sturdy uppercase forms, and high x-height make the interface feel like a
+purpose-built field instrument instead of a generic editorial SaaS template.
+Azeret Mono remains the operational voice for dates, state, capacity, and
+actions. The contrast is deliberate: human decisions in Familjen, machine-
+legible evidence in Azeret.
+
+The product should feel like a calm field manual for the day: direct, warm,
+precise, and a little unconventional. Avoid ornamental serif hero typography,
+default browser focus treatments, feature-card marketing grids, and decoration
+that is not rooted in the Convergent Day identity.
+
+When Matthew 6:34 appears in product copy, use the verified NIV wording and
+identify it as `MATTHEW 6:34 · NIV`; never present it as an unattributed maxim.
+
 ## Current product relationship
 
 The authenticated application uses a darker, more focused editorial variant of
@@ -47,3 +64,12 @@ the same design language. The public site can use the concept’s brighter,
 landscape-led presentation while the working surface stays low-distraction.
 Shared typography, restraint, language, and product proof should make them feel
 like one system rather than two visual brands.
+
+## Brand mark
+
+Saltzer's Convergent Day mark turns many incoming paths into one protected
+center. One ember ray enters from below: the deliberate move that advances the
+day. The mark replaces the placeholder circled `S` everywhere and must remain
+legible as a favicon, native icon, compact product rail mark, and CLI-sized
+glyph. Its default expression is ink and ember on warm paper; dark surfaces use
+paper and a brighter ember without changing the geometry.

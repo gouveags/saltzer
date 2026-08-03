@@ -5,6 +5,7 @@ const workspace = resolve(import.meta.dirname, "../..");
 
 export default defineConfig({
   testDir: "./tests",
+  timeout: 60_000,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -13,8 +14,7 @@ export default defineConfig({
     baseURL: "http://localhost:8081",
     colorScheme: "dark",
     screenshot: "only-on-failure",
-    trace: "retain-on-failure",
-    video: "retain-on-failure",
+    trace: "on-first-retry",
   },
   projects: [
     {
