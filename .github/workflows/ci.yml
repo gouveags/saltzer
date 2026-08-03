@@ -30,7 +30,7 @@ jobs:
       DATABASE_URL: postgres://saltzer:saltzer@localhost:5432/saltzer
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.18.0
       - uses: actions/setup-node@v4
