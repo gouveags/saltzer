@@ -26,6 +26,7 @@ describe("Saltzer MCP server", () => {
       today: vi.fn(async (date) => ({ localDate: date, contract: null, scheduledCandidates: [] })),
       addOutcome: vi.fn(),
       addScheduledToDay: vi.fn(),
+      closeDay: vi.fn(async (date) => ({ localDate: date, status: "closed" }) as never),
       contextPacket: vi.fn(),
       decideOutcome: vi.fn(async () => ({ id: outcomeId }) as never),
     };
@@ -43,8 +44,22 @@ describe("Saltzer MCP server", () => {
       "move_outcome_to_tomorrow",
       "schedule_outcome",
       "add_scheduled_outcome_to_day",
+      "close_daily_contract",
       "get_context_packet",
     ]);
+  });
+
+  it("closes the exact local date requested by the agent", async () => {
+    const implementation = fakeClient();
+    const protocolClient = await connect(implementation);
+
+    const result = await protocolClient.callTool({
+      name: "close_daily_contract",
+      arguments: { date: "2026-08-03" },
+    });
+
+    expect(implementation.closeDay).toHaveBeenCalledWith("2026-08-03");
+    expect(result.isError).not.toBe(true);
   });
 
   it("maps tomorrow to an explicit domain decision", async () => {

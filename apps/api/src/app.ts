@@ -1,16 +1,25 @@
 import { createHash, randomBytes } from "node:crypto";
 import { expo } from "@better-auth/expo";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { createDatabase, DailyRepository, OutcomeNotFoundError, schema } from "@saltzer/database";
+import {
+  createDatabase,
+  DailyContractNotFoundError,
+  DailyRepository,
+  OutcomeNotFoundError,
+  schema,
+} from "@saltzer/database";
 import {
   buildContextPacket,
+  CloseDayResultSchema,
   ContextPacketSchema,
   CreateOutcomeInputSchema,
+  DailyContractClosedError,
   DailyOutcomeLimitError,
   LocalDateSchema,
   OutcomeDecisionInputSchema,
   OutcomeSchema,
   TodayViewSchema,
+  UnresolvedDailyOutcomesError,
   UpdateOutcomeInputSchema,
 } from "@saltzer/domain";
 import { betterAuth } from "better-auth";
@@ -19,7 +28,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import type { SaltzerEnv } from "./env.js";
-import { serializeOutcome, serializeToday } from "./serialize.js";
+import { serializeClosedContract, serializeOutcome, serializeToday } from "./serialize.js";
 
 const ErrorSchema = z.object({
   error: z.object({
@@ -128,6 +137,28 @@ export function createSaltzerApp(env: SaltzerEnv) {
     const input = context.req.valid("json");
     const outcome = await repository.createOutcome(context.get("userId"), date, input);
     return context.json(serializeOutcome(outcome), 200);
+  });
+
+  const closeDayRoute = createRoute({
+    method: "post",
+    path: "/v1/contracts/{date}/close",
+    request: { params: z.object({ date: LocalDateSchema }) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: CloseDayResultSchema } },
+        description: "Daily Contract closed",
+      },
+      404: { content: { "application/json": { schema: ErrorSchema } }, description: "Not found" },
+      409: {
+        content: { "application/json": { schema: ErrorSchema } },
+        description: "Daily Contract cannot be closed",
+      },
+    },
+  });
+  app.openapi(closeDayRoute, async (context) => {
+    const { date } = context.req.valid("param");
+    const contract = await repository.closeDailyContract(context.get("userId"), date);
+    return context.json(serializeClosedContract(contract), 200);
   });
 
   const updateOutcomeRoute = createRoute({
@@ -276,7 +307,13 @@ export function createSaltzerApp(env: SaltzerEnv) {
     if (error instanceof DailyOutcomeLimitError) {
       return context.json(jsonError("DAILY_LIMIT", error.message), 409);
     }
-    if (error instanceof OutcomeNotFoundError) {
+    if (error instanceof DailyContractClosedError) {
+      return context.json(jsonError("CONTRACT_CLOSED", error.message), 409);
+    }
+    if (error instanceof UnresolvedDailyOutcomesError) {
+      return context.json(jsonError("UNRESOLVED_OUTCOMES", error.message), 409);
+    }
+    if (error instanceof OutcomeNotFoundError || error instanceof DailyContractNotFoundError) {
       return context.json(jsonError("NOT_FOUND", error.message), 404);
     }
     if (error instanceof z.ZodError) {

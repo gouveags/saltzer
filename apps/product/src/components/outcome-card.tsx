@@ -49,6 +49,7 @@ export function OutcomeCard(props: OutcomeCardProps) {
       <View style={styles.body}>
         <Pressable
           accessibilityLabel={`Complete ${outcome.title}`}
+          accessibilityRole="button"
           onPress={props.onComplete}
           style={[styles.check, { borderColor: theme.ink }]}
         >
@@ -64,7 +65,12 @@ export function OutcomeCard(props: OutcomeCardProps) {
         </View>
       </View>
 
-      <Pressable onPress={() => setExpanded(!expanded)}>
+      <Pressable
+        accessibilityLabel={`${expanded ? "Hide" : "Show"} context and decisions for ${outcome.title}`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        onPress={() => setExpanded(!expanded)}
+      >
         <Text style={[styles.toggle, { color: theme.moss }]}>
           {expanded ? "Hide details ↑" : "Context & decisions ↓"}
         </Text>

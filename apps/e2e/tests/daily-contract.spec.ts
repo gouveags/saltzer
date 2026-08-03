@@ -47,4 +47,14 @@ test("a person can choose, understand, and complete today's contract", async ({ 
   await page.getByLabel("Complete Choose the real work").click();
   await expect(page.getByText("1/3")).toBeVisible();
   await expect(page.getByText("✓ Choose the real work")).toBeVisible();
+
+  await page.getByLabel("Complete Share only useful context").click();
+  await page.getByLabel("Complete End the day deliberately").click();
+  await expect(page.getByText("3/3")).toBeVisible();
+  await page.getByRole("button", { name: "Close the day" }).click();
+  await expect(page.getByText("Enough for today.")).toBeVisible();
+  await page.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByText("DAY CLOSED")).toBeVisible();
+  await expect(page.getByText("Tomorrow begins fresh.")).toBeVisible();
+  await expect(page.getByText("CLOSED", { exact: true })).toBeVisible();
 });

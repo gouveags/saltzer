@@ -74,4 +74,28 @@ describe("SaltzerClient", () => {
       }),
     ).rejects.toMatchObject({ status: 409, code: "DAILY_LIMIT" });
   });
+
+  it("closes a day through the explicit contract endpoint", async () => {
+    const request = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            localDate: "2026-08-03",
+            status: "closed",
+            closedAt: "2026-08-04T00:12:00.000Z",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    const client = new SaltzerClient({
+      baseUrl: "https://saltzer.example",
+      fetch: request as typeof fetch,
+    });
+
+    await expect(client.closeDay("2026-08-03")).resolves.toMatchObject({ status: "closed" });
+    expect(request).toHaveBeenCalledWith(
+      "https://saltzer.example/v1/contracts/2026-08-03/close",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
 });

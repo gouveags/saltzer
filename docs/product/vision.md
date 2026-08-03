@@ -27,6 +27,7 @@ The first release owns one complete loop:
 - The API rejects a fourth outcome in the same Daily Contract even under concurrent requests.
 - Completing, releasing, and rescheduling are distinct durable transitions.
 - An unfinished outcome never appears in another day without an explicit choice.
+- Closing requires a decision for every outcome and makes the Daily Contract immutable.
 - Scheduled outcomes become eligible on their selected local date.
 - A context packet previews the exact information and allowed action shared with AI.
 - CLI and MCP can read and mutate the same authenticated Daily Contract.

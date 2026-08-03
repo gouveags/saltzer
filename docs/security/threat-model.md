@@ -22,6 +22,7 @@ No model provider receives data in this slice. “Start with AI” displays the 
 | --- | --- | --- |
 | Cross-account object access | The API derives `userId` from a session or token; repositories include it in every object query and mutation. | API integration test attempts a second-user update and receives `404`. |
 | Daily-limit race | PostgreSQL advisory locks serialize writes for one user and local date. | Four concurrent repository writes yield three outcomes and one domain error. |
+| Closed-day mutation race | Contract row locks serialize close, edit, and decision transactions; every write checks the durable contract status. | Repository tests reject later additions, edits, decisions, and scheduled moves; the browser journey verifies the closed state. |
 | Forged or malformed input | Zod schemas validate dates, UUIDs, lengths, decisions, permissions, and estimates at the HTTP boundary. | Domain and API tests cover invalid and limit paths. |
 | CSRF from an untrusted website | Credentialed CORS uses an explicit allowlist; state changes require JSON or PATCH; Better Auth has an explicit trusted-origin list. | Browser and API integration tests use only the configured origin. |
 | Bearer-token disclosure | Tokens contain 256 bits of randomness, are returned once, sent only in the `Authorization` header, and stored as SHA-256 hashes. | SDK and API tests assert header transport, one-way storage behavior, and token auth. |

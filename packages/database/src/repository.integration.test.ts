@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { DailyOutcomeLimitError } from "@saltzer/domain";
+import {
+  DailyContractClosedError,
+  DailyOutcomeLimitError,
+  UnresolvedDailyOutcomesError,
+} from "@saltzer/domain";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase } from "./client.js";
@@ -50,5 +54,47 @@ describeWithDatabase("DailyRepository integration", () => {
 
     const day = await repository.getDailyContract(userId, "2026-08-03");
     expect(day.outcomes).toHaveLength(3);
+
+    await expect(repository.closeDailyContract(userId, "2026-08-03")).rejects.toBeInstanceOf(
+      UnresolvedDailyOutcomesError,
+    );
+
+    await Promise.all([
+      repository.decideOutcome(userId, day.outcomes[0]?.id ?? "", "2026-08-03", {
+        decision: "complete",
+      }),
+      repository.decideOutcome(userId, day.outcomes[1]?.id ?? "", "2026-08-03", {
+        decision: "release",
+      }),
+      repository.decideOutcome(userId, day.outcomes[2]?.id ?? "", "2026-08-03", {
+        decision: "tomorrow",
+      }),
+    ]);
+
+    await expect(repository.closeDailyContract(userId, "2026-08-03")).resolves.toMatchObject({
+      status: "closed",
+      closedAt: expect.any(Date),
+    });
+    await expect(
+      repository.createOutcome(userId, "2026-08-03", {
+        title: "Late addition",
+        desiredOutcome: "",
+        context: "",
+        constraints: "",
+        estimateMinutes: null,
+        aiPermissions: [],
+      }),
+    ).rejects.toBeInstanceOf(DailyContractClosedError);
+    await expect(
+      repository.updateOutcome(userId, day.outcomes[0]?.id ?? "", { title: "Rewritten day" }),
+    ).rejects.toBeInstanceOf(DailyContractClosedError);
+    await expect(
+      repository.decideOutcome(userId, day.outcomes[0]?.id ?? "", "2026-08-03", {
+        decision: "release",
+      }),
+    ).rejects.toBeInstanceOf(DailyContractClosedError);
+    await expect(
+      repository.addScheduledToDay(userId, day.outcomes[2]?.id ?? "", "2026-08-03"),
+    ).rejects.toBeInstanceOf(DailyContractClosedError);
   });
 });

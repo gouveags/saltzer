@@ -1,4 +1,6 @@
 import {
+  type CloseDayResult,
+  CloseDayResultSchema,
   type ContextPacket,
   ContextPacketSchema,
   type CreateOutcomeInput,
@@ -53,6 +55,11 @@ export class SaltzerClient {
       body: JSON.stringify(input),
     });
     return OutcomeSchema.parse(data);
+  }
+
+  async closeDay(localDate: LocalDate): Promise<CloseDayResult> {
+    const data = await this.request(`/v1/contracts/${localDate}/close`, { method: "POST" });
+    return CloseDayResultSchema.parse(data);
   }
 
   async updateOutcome(outcomeId: string, input: UpdateOutcomeInput): Promise<Outcome> {
