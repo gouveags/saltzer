@@ -5,7 +5,7 @@
     "scheme": "saltzer",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/saltzer-icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.saltzer.product",
@@ -15,13 +15,13 @@
       "package": "com.saltzer.product",
       "adaptiveIcon": {
         "backgroundColor": "#F1EBDD",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/saltzer-android-foreground.png",
+        "monochromeImage": "./assets/images/saltzer-android-monochrome.png"
       }
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/saltzer-favicon.png"
     },
     "plugins": ["expo-router", "expo-secure-store", "expo-font"],
     "experiments": {

@@ -45,6 +45,7 @@ The security checklist follows OWASP ASVS themes: validate at trust boundaries, 
 The Today screen is the critical path. We optimize it before secondary surfaces:
 
 - one request loads the complete visible day;
+- the production web entry may not regress beyond its checked-in raw and gzip budgets;
 - interactions use optimistic feedback only when rollback is unambiguous;
 - no AI SDK or provider bundle is shipped to the client;
 - production web output is measured for bundle size and Core Web Vitals;
