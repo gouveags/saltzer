@@ -1,3 +1,5 @@
+<img src="./apps/product/assets/images/saltzer-icon.png" alt="Saltzer logo" width="96" />
+
 # Saltzer
 
 **The daily execution system for humans working with AI.**
@@ -10,7 +12,7 @@ Saltzer is open-source software licensed under the AGPL-3.0. The product is in
 active development. The Daily Contract and its focus/progress loop are shared
 by the web, native, CLI, and MCP clients.
 
-![Saltzer Morning Reality Check](./docs/screenshots/vision-44-morning-reality-check.png)
+![Saltzer Daily Contract](./apps/e2e/tests/daily-contract.spec.ts-snapshots/daily-contract-focused-chromium-linux.png)
 
 ## Product principles
 
@@ -68,11 +70,15 @@ contains development-safe placeholders only.
 pnpm check
 pnpm test
 pnpm build
+pnpm e2e
+pnpm security:audit
+pnpm performance:web
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md), [CONTRIBUTING.md](./CONTRIBUTING.md),
-and [docs/product/vision.md](./docs/product/vision.md) for the product contract
-and engineering decisions.
+[the implementation-facing product vision](./docs/product/vision.md), and the
+[founding product and business target](./docs/product/founding-product-business-target.docx)
+for the product contract and engineering decisions.
 
 ## License
 

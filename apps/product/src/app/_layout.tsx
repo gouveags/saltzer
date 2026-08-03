@@ -1,10 +1,11 @@
 import { AzeretMono_500Medium, useFonts as useMonoFont } from "@expo-google-fonts/azeret-mono";
 import {
-  Newsreader_400Regular,
-  Newsreader_500Medium,
-  Newsreader_600SemiBold,
-  useFonts as useNewsreaderFonts,
-} from "@expo-google-fonts/newsreader";
+  FamiljenGrotesk_400Regular,
+  FamiljenGrotesk_400Regular_Italic,
+  FamiljenGrotesk_600SemiBold,
+  FamiljenGrotesk_700Bold,
+  useFonts as useFamiljenFonts,
+} from "@expo-google-fonts/familjen-grotesk";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
@@ -15,18 +16,19 @@ import "../global.css";
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [newsreaderLoaded] = useNewsreaderFonts({
-    Newsreader_400Regular,
-    Newsreader_500Medium,
-    Newsreader_600SemiBold,
+  const [familjenLoaded] = useFamiljenFonts({
+    FamiljenGrotesk_400Regular,
+    FamiljenGrotesk_400Regular_Italic,
+    FamiljenGrotesk_600SemiBold,
+    FamiljenGrotesk_700Bold,
   });
   const [monoLoaded] = useMonoFont({ AzeretMono_500Medium });
 
   useEffect(() => {
-    if (newsreaderLoaded && monoLoaded) void SplashScreen.hideAsync();
-  }, [monoLoaded, newsreaderLoaded]);
+    if (familjenLoaded && monoLoaded) void SplashScreen.hideAsync();
+  }, [familjenLoaded, monoLoaded]);
 
-  if (!newsreaderLoaded || !monoLoaded) return null;
+  if (!familjenLoaded || !monoLoaded) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

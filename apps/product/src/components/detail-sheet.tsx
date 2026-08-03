@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   content: { gap: 16, padding: 28 },
   eyebrow: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1.5 },
   title: { fontFamily: fonts.display, fontSize: 36, letterSpacing: -1 },
-  note: { fontFamily: fonts.serif, fontSize: 15, lineHeight: 22 },
+  note: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
   packet: { borderRadius: 3, borderWidth: 1, padding: 20 },
   body: { fontFamily: fonts.mono, fontSize: 11, lineHeight: 20 },
 });

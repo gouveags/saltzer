@@ -1,5 +1,10 @@
 # Product vision
 
+The complete founder-authored source for this direction is retained in
+[Founding Product & Business Target](./founding-product-business-target.docx).
+This Markdown document is the implementation-facing product contract derived
+from that source.
+
 ## North star
 
 Help individuals decide what matters today, execute it well, and become more

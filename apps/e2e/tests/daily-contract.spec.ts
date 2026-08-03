@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("a person can choose, understand, and complete today's contract", async ({ page }) => {
   const email = `e2e-${Date.now()}@saltzer.test`;
+  await page.clock.setFixedTime(new Date("2026-08-03T12:00:00-03:00"));
   await page.goto("/");
 
   await page.getByRole("textbox", { name: "Your name" }).fill("E2E Person");
@@ -40,6 +41,11 @@ test("a person can choose, understand, and complete today's contract", async ({ 
   await page.getByRole("button", { name: "Focus this now" }).click();
   await expect(page.getByText("IN FOCUS NOW")).toBeVisible();
   await expect(page.getByText("Open the evidence", { exact: true })).toHaveCount(2);
+  await page.waitForTimeout(500);
+  await expect(page).toHaveScreenshot("daily-contract-focused.png");
+  await page.getByRole("button", { name: "Use light theme" }).click();
+  await expect(page).toHaveScreenshot("daily-contract-light.png");
+  await page.getByRole("button", { name: "Use dark theme" }).click();
 
   await page.reload();
   await expect(page.getByText("IN FOCUS NOW")).toBeVisible();

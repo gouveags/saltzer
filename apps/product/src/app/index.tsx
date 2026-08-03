@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
   railMiddle: { alignItems: "center", gap: 3 },
   railLabel: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.4, marginBottom: 10 },
   railDay: { fontFamily: fonts.display, fontSize: 47, lineHeight: 48 },
-  railMonth: { fontFamily: fonts.serif, fontSize: 13 },
+  railMonth: { fontFamily: fonts.body, fontSize: 13 },
   railBottom: { alignItems: "center", gap: 18 },
   railAction: {
     fontFamily: fonts.mono,
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
   },
-  mobileDate: { fontFamily: fonts.serif, fontSize: 12 },
+  mobileDate: { fontFamily: fonts.body, fontSize: 12 },
   mobileActions: { alignItems: "center", flexDirection: "row", gap: 12 },
   mobileAction: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 0.8 },
   content: {
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   kicker: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1.55 },
   heading: { fontFamily: fonts.display, fontSize: 53, letterSpacing: -2, lineHeight: 56 },
   headingMobile: { fontSize: 39, letterSpacing: -1.3, lineHeight: 42 },
-  subheading: { fontFamily: fonts.serif, fontSize: 18, lineHeight: 26, maxWidth: 540 },
+  subheading: { fontFamily: fonts.body, fontSize: 18, lineHeight: 26, maxWidth: 540 },
   progress: {
     alignItems: "center",
     borderRadius: 99,
@@ -716,8 +716,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 14,
   },
-  errorText: { flex: 1, fontFamily: fonts.serif, fontSize: 15 },
-  errorClose: { fontFamily: fonts.serif, fontSize: 24, marginLeft: 12 },
+  errorText: { flex: 1, fontFamily: fonts.body, fontSize: 15 },
+  errorClose: { fontFamily: fonts.body, fontSize: 24, marginLeft: 12 },
   scheduled: {
     alignItems: "center",
     borderWidth: 1,
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
   },
   scheduledCopy: { flex: 1, gap: 5 },
   scheduledLabel: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.2 },
-  scheduledTitle: { fontFamily: fonts.serifMedium, fontSize: 18 },
+  scheduledTitle: { fontFamily: fonts.bodyMedium, fontSize: 18 },
   focusHero: {
     alignItems: "center",
     borderRadius: 4,
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   focusHeroKicker: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.35 },
   focusHeroTitle: { fontFamily: fonts.display, fontSize: 29, letterSpacing: -0.7 },
   focusHeroLabel: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.2, marginTop: 7 },
-  focusHeroAction: { fontFamily: fonts.serifMedium, fontSize: 18, lineHeight: 24 },
+  focusHeroAction: { fontFamily: fonts.bodyMedium, fontSize: 18, lineHeight: 24 },
   focusHeroActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   sectionHeader: {
     alignItems: "flex-end",
@@ -768,9 +768,9 @@ const styles = StyleSheet.create({
     padding: 24,
     width: "100%",
   },
-  plus: { fontFamily: fonts.serif, fontSize: 31, marginBottom: 6 },
-  emptyTitle: { fontFamily: fonts.serifMedium, fontSize: 20 },
-  emptyCopy: { fontFamily: fonts.serif, fontSize: 14, marginTop: 5, textAlign: "center" },
+  plus: { fontFamily: fonts.body, fontSize: 31, marginBottom: 6 },
+  emptyTitle: { fontFamily: fonts.bodyMedium, fontSize: 20 },
+  emptyCopy: { fontFamily: fonts.body, fontSize: 14, marginTop: 5, textAlign: "center" },
   restraint: {
     alignItems: "center",
     borderRadius: 4,
@@ -780,11 +780,11 @@ const styles = StyleSheet.create({
     opacity: 0.45,
     width: "100%",
   },
-  restraintText: { fontFamily: fonts.serif, fontSize: 14, fontStyle: "italic" },
+  restraintText: { fontFamily: fonts.bodyItalic, fontSize: 14 },
   loadingBlock: { alignItems: "center", minHeight: 260, paddingTop: 80 },
   completed: { borderTopWidth: 1, gap: 9, marginTop: 34, paddingTop: 24 },
-  completedItem: { fontFamily: fonts.serif, fontSize: 16, textDecorationLine: "line-through" },
-  releasedItem: { fontFamily: fonts.serif, fontSize: 16, fontStyle: "italic" },
+  completedItem: { fontFamily: fonts.body, fontSize: 16, textDecorationLine: "line-through" },
+  releasedItem: { fontFamily: fonts.bodyItalic, fontSize: 16 },
   closedDay: {
     alignItems: "center",
     borderRadius: 4,
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
   closedCopy: { flex: 1, gap: 5 },
   closedKicker: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.4 },
   closedTitle: { fontFamily: fonts.display, fontSize: 29, letterSpacing: -0.7 },
-  closedBody: { fontFamily: fonts.serif, fontSize: 15, lineHeight: 22, maxWidth: 650 },
+  closedBody: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, maxWidth: 650 },
   closeDay: {
     alignItems: "center",
     borderRadius: 4,
@@ -811,7 +811,7 @@ const styles = StyleSheet.create({
   },
   closeDayCopy: { flex: 1, gap: 6 },
   closeDayTitle: { fontFamily: fonts.display, fontSize: 26, letterSpacing: -0.5 },
-  closeDayBody: { fontFamily: fonts.serif, fontSize: 14, lineHeight: 20 },
+  closeDayBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20 },
   agent: {
     alignItems: "center",
     borderRadius: 4,
@@ -826,7 +826,7 @@ const styles = StyleSheet.create({
   agentKicker: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.3 },
   agentTitle: { fontFamily: fonts.display, fontSize: 27, letterSpacing: -0.6 },
   agentBody: {
-    fontFamily: fonts.serif,
+    fontFamily: fonts.body,
     fontSize: 14,
     lineHeight: 20,
     maxWidth: 640,
@@ -835,6 +835,6 @@ const styles = StyleSheet.create({
   agentButton: { minWidth: 190 },
   footer: { alignItems: "center", marginTop: 74 },
   footerQuote: { fontFamily: fonts.display, fontSize: 24, textAlign: "center" },
-  footerNote: { fontFamily: fonts.serif, fontSize: 15, fontStyle: "italic", marginTop: 4 },
+  footerNote: { fontFamily: fonts.bodyItalic, fontSize: 15, marginTop: 4 },
   loadingScreen: { alignItems: "center", flex: 1, gap: 24, justifyContent: "center" },
 });
