@@ -27,6 +27,7 @@ the web, native, CLI, and MCP clients.
 apps/
   api/       Hono HTTP API and authentication boundary
   cli/       `saltzer` command-line client
+  e2e/       Playwright tests against the running product
   mcp/       MCP server for user-approved agent access
   product/   Expo Router app for iOS, Android, and web
 packages/

@@ -177,7 +177,7 @@ export default function HomeScreen() {
       <View style={styles.shell}>
         {wide ? (
           <View style={[styles.rail, { borderRightColor: theme.hairline }]}>
-            <BrandMark theme={theme} />
+            <BrandMark compact theme={theme} />
             <View style={styles.railMiddle}>
               <Text style={[styles.railLabel, { color: theme.inkMuted }]}>TODAY</Text>
               <Text style={[styles.railDay, { color: theme.ink }]}>{localDate.slice(-2)}</Text>
@@ -186,12 +186,22 @@ export default function HomeScreen() {
               </Text>
             </View>
             <View style={styles.railBottom}>
-              <Pressable onPress={() => setDark(!dark)}>
+              <Pressable
+                accessibilityLabel={`Use ${dark ? "light" : "dark"} theme`}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => setDark(!dark)}
+              >
                 <Text style={[styles.railAction, { color: theme.inkMuted }]}>
                   {dark ? "LIGHT" : "DARK"}
                 </Text>
               </Pressable>
-              <Pressable onPress={() => void authClient.signOut()}>
+              <Pressable
+                accessibilityLabel="Sign out"
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => void authClient.signOut()}
+              >
                 <Text style={[styles.railAction, { color: theme.inkMuted }]}>SIGN OUT</Text>
               </Pressable>
             </View>
@@ -202,7 +212,11 @@ export default function HomeScreen() {
             <Text style={[styles.mobileDate, { color: theme.inkMuted }]}>
               {longDate(localDate)}
             </Text>
-            <Pressable onPress={() => setDark(!dark)}>
+            <Pressable
+              accessibilityLabel={`Use ${dark ? "light" : "dark"} theme`}
+              accessibilityRole="button"
+              onPress={() => setDark(!dark)}
+            >
               <Text style={[styles.mobileTheme, { color: theme.ink }]}>◐</Text>
             </Pressable>
           </View>
@@ -460,8 +474,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.mono,
     fontSize: 8,
     letterSpacing: 1,
-    transform: [{ rotate: "-90deg" }],
-    width: 58,
+    textAlign: "center",
+    width: 72,
   },
   mobileHeader: {
     alignItems: "center",

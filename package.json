@@ -13,6 +13,7 @@
     "check": "biome check . && turbo run typecheck",
     "check:fix": "biome check --write .",
     "dev": "turbo run dev --parallel",
+    "e2e": "pnpm --filter @saltzer/e2e e2e",
     "icons:generate": "bash scripts/generate-icons.sh",
     "performance:web": "node scripts/check-web-budget.mjs",
     "test": "turbo run test",

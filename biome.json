@@ -7,6 +7,8 @@
       "!!**/.turbo",
       "!!**/.expo",
       "!!**/coverage",
+      "!!**/playwright-report",
+      "!!**/test-results",
       "!!**/drizzle/meta",
       "!!apps/product/assets"
     ]
