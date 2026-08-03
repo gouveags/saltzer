@@ -76,6 +76,7 @@ export function OutcomeEditor({
         style={[styles.backdrop, { backgroundColor: "rgba(10, 12, 10, 0.54)" }]}
       >
         <View
+          accessibilityViewIsModal
           style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.hairline }]}
         >
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -89,6 +90,7 @@ export function OutcomeEditor({
 
             <Field label="Outcome" theme={theme}>
               <TextInput
+                accessibilityLabel="Outcome"
                 autoFocus
                 maxLength={180}
                 onChangeText={setTitle}
@@ -100,6 +102,7 @@ export function OutcomeEditor({
             </Field>
             <Field label="What done looks like" theme={theme}>
               <TextInput
+                accessibilityLabel="What done looks like"
                 maxLength={2_000}
                 multiline
                 onChangeText={setDesiredOutcome}
@@ -115,6 +118,7 @@ export function OutcomeEditor({
             </Field>
             <Field label="Context" theme={theme}>
               <TextInput
+                accessibilityLabel="Context"
                 maxLength={20_000}
                 multiline
                 onChangeText={setContext}
@@ -132,6 +136,7 @@ export function OutcomeEditor({
               <View style={styles.flex}>
                 <Field label="Constraints" theme={theme}>
                   <TextInput
+                    accessibilityLabel="Constraints"
                     maxLength={5_000}
                     onChangeText={setConstraints}
                     placeholder="Do not publish"
@@ -144,6 +149,7 @@ export function OutcomeEditor({
               <View style={styles.minutes}>
                 <Field label="Minutes" theme={theme}>
                   <TextInput
+                    accessibilityLabel="Minutes"
                     keyboardType="number-pad"
                     onChangeText={setMinutes}
                     placeholder="45"

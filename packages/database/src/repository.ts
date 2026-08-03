@@ -6,6 +6,10 @@ import {
   type LocalDate,
   nextLocalDate,
   type OutcomeDecisionInput,
+  OutcomeNotActionableError,
+  OutcomeNotFocusedError,
+  type ProgressCheckInInput,
+  type StartFocusInput,
   UnresolvedDailyOutcomesError,
   type UpdateOutcomeInput,
 } from "@saltzer/domain";
@@ -123,6 +127,10 @@ export class DailyRepository {
 
   async updateOutcome(userId: string, outcomeId: string, input: UpdateOutcomeInput) {
     return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:focus`}, 0))`,
+      );
+
       const [existing] = await tx
         .select()
         .from(outcomes)
@@ -160,6 +168,124 @@ export class DailyRepository {
     });
   }
 
+  async startFocus(userId: string, outcomeId: string, input: StartFocusInput) {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:focus`}, 0))`,
+      );
+
+      const [existing] = await tx
+        .select()
+        .from(outcomes)
+        .where(and(eq(outcomes.id, outcomeId), eq(outcomes.userId, userId)))
+        .for("update")
+        .limit(1);
+
+      if (!existing) throw new OutcomeNotFoundError();
+      if (!existing.contractId || existing.status !== "planned") {
+        throw new OutcomeNotActionableError();
+      }
+
+      const [contract] = await tx
+        .select({ status: dailyContracts.status })
+        .from(dailyContracts)
+        .where(and(eq(dailyContracts.id, existing.contractId), eq(dailyContracts.userId, userId)))
+        .for("update")
+        .limit(1);
+
+      if (contract?.status !== "open") throw new OutcomeNotActionableError();
+
+      await tx
+        .update(outcomes)
+        .set({ focusStartedAt: null })
+        .where(and(eq(outcomes.userId, userId), eq(outcomes.status, "planned")));
+
+      const now = new Date();
+      const [focused] = await tx
+        .update(outcomes)
+        .set({
+          nextAction: input.nextAction,
+          focusStartedAt: now,
+          blockedAt: null,
+          updatedAt: now,
+        })
+        .where(and(eq(outcomes.id, outcomeId), eq(outcomes.userId, userId)))
+        .returning();
+
+      if (!focused) throw new OutcomeNotFoundError();
+
+      await tx.insert(outcomeEvents).values({
+        outcomeId,
+        userId,
+        type: "focus_started",
+        metadata: { nextAction: input.nextAction },
+      });
+
+      return focused;
+    });
+  }
+
+  async checkInProgress(userId: string, outcomeId: string, input: ProgressCheckInInput) {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:focus`}, 0))`,
+      );
+
+      const [existing] = await tx
+        .select()
+        .from(outcomes)
+        .where(and(eq(outcomes.id, outcomeId), eq(outcomes.userId, userId)))
+        .for("update")
+        .limit(1);
+
+      if (!existing) throw new OutcomeNotFoundError();
+      if (!existing.contractId || existing.status !== "planned") {
+        throw new OutcomeNotActionableError();
+      }
+      if (!existing.focusStartedAt) throw new OutcomeNotFocusedError();
+
+      const [contract] = await tx
+        .select({ status: dailyContracts.status })
+        .from(dailyContracts)
+        .where(and(eq(dailyContracts.id, existing.contractId), eq(dailyContracts.userId, userId)))
+        .for("update")
+        .limit(1);
+
+      if (contract?.status !== "open") throw new OutcomeNotActionableError();
+
+      const now = new Date();
+      const [updated] = await tx
+        .update(outcomes)
+        .set({
+          ...(input.nextAction ? { nextAction: input.nextAction } : {}),
+          focusStartedAt: input.state === "continue" ? existing.focusStartedAt : null,
+          lastProgressNote: input.note,
+          lastProgressAt: now,
+          blockedAt: input.state === "blocked" ? now : null,
+          updatedAt: now,
+        })
+        .where(and(eq(outcomes.id, outcomeId), eq(outcomes.userId, userId)))
+        .returning();
+
+      if (!updated) throw new OutcomeNotFoundError();
+
+      await tx.insert(outcomeEvents).values({
+        outcomeId,
+        userId,
+        type:
+          input.state === "continue"
+            ? "progressed"
+            : input.state === "blocked"
+              ? "blocked"
+              : "focus_paused",
+        note: input.note,
+        metadata: input.nextAction ? { nextAction: input.nextAction } : {},
+      });
+
+      return updated;
+    });
+  }
+
   async decideOutcome(
     userId: string,
     outcomeId: string,
@@ -167,6 +293,10 @@ export class DailyRepository {
     input: OutcomeDecisionInput,
   ) {
     return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:focus`}, 0))`,
+      );
+
       const [existing] = await tx
         .select()
         .from(outcomes)
@@ -198,10 +328,16 @@ export class DailyRepository {
         .update(outcomes)
         .set(
           input.decision === "complete"
-            ? { status: "completed", completedAt: now }
+            ? { status: "completed", completedAt: now, focusStartedAt: null, blockedAt: null }
             : input.decision === "release"
-              ? { status: "released", releasedAt: now }
-              : { contractId: null, scheduledFor: targetDate, position: 0 },
+              ? { status: "released", releasedAt: now, focusStartedAt: null, blockedAt: null }
+              : {
+                  contractId: null,
+                  scheduledFor: targetDate,
+                  position: 0,
+                  focusStartedAt: null,
+                  blockedAt: null,
+                },
         )
         .where(and(eq(outcomes.id, outcomeId), eq(outcomes.userId, userId)))
         .returning();

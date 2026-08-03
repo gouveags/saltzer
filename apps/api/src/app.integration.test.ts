@@ -110,6 +110,67 @@ describeWithDatabase("Saltzer API integration", () => {
       permissions: ["read_context", "suggest"],
     });
 
+    const focusFirst = await instance.app.request(`/v1/outcomes/${outcomes[0]?.id}/focus`, {
+      ...jsonRequest({ nextAction: "Open the failing trace" }, ownerCookie),
+    });
+    expect(focusFirst.status).toBe(200);
+    await expect(focusFirst.json()).resolves.toMatchObject({
+      nextAction: "Open the failing trace",
+      focusStartedAt: expect.any(String),
+    });
+
+    const focusSecond = await instance.app.request(`/v1/outcomes/${outcomes[1]?.id}/focus`, {
+      ...jsonRequest({ nextAction: "Read the release diff" }, ownerCookie),
+    });
+    expect(focusSecond.status).toBe(200);
+
+    const staleProgress = await instance.app.request(`/v1/outcomes/${outcomes[0]?.id}/progress`, {
+      ...jsonRequest(
+        { state: "continue", note: "This focus was replaced", nextAction: "Do not continue" },
+        ownerCookie,
+      ),
+    });
+    expect(staleProgress.status).toBe(409);
+    await expect(staleProgress.json()).resolves.toMatchObject({
+      error: { code: "OUTCOME_NOT_FOCUSED" },
+    });
+
+    const focusedToday = await instance.app.request("/v1/today?date=2026-08-03", {
+      headers: { Cookie: ownerCookie, Origin: origin },
+    });
+    const focusedTodayBody = (await focusedToday.json()) as {
+      contract: { outcomes: Array<{ id: string; focusStartedAt: string | null }> };
+    };
+    expect(focusedTodayBody.contract.outcomes.filter((outcome) => outcome.focusStartedAt)).toEqual([
+      expect.objectContaining({ id: outcomes[1]?.id }),
+    ]);
+
+    const progress = await instance.app.request(`/v1/outcomes/${outcomes[1]?.id}/progress`, {
+      ...jsonRequest(
+        {
+          state: "continue",
+          note: "The diff is clean",
+          nextAction: "Run the release checks",
+        },
+        ownerCookie,
+      ),
+    });
+    expect(progress.status).toBe(200);
+    await expect(progress.json()).resolves.toMatchObject({
+      nextAction: "Run the release checks",
+      lastProgressNote: "The diff is clean",
+      focusStartedAt: expect.any(String),
+    });
+
+    const refreshedContext = await instance.app.request(
+      `/v1/outcomes/${outcomes[1]?.id}/context-packet?date=2026-08-03`,
+      { headers: { Cookie: ownerCookie, Origin: origin } },
+    );
+    await expect(refreshedContext.json()).resolves.toMatchObject({
+      nextAction: "Run the release checks",
+      lastProgressNote: "The diff is clean",
+    });
+
     const tokenResponse = await instance.app.request(
       "/v1/tokens",
       jsonRequest({ name: "Integration agent" }, ownerCookie),
@@ -152,6 +213,11 @@ describeWithDatabase("Saltzer API integration", () => {
       body: JSON.stringify({ title: "Stolen outcome" }),
     });
     expect(crossUserUpdate.status).toBe(404);
+
+    const crossUserFocus = await instance.app.request(`/v1/outcomes/${outcomes[0]?.id}/focus`, {
+      ...jsonRequest({ nextAction: "Steal focus" }, otherCookie),
+    });
+    expect(crossUserFocus.status).toBe(404);
 
     const prematureClose = await instance.app.request("/v1/contracts/2026-08-03/close", {
       method: "POST",

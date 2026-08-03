@@ -15,6 +15,8 @@ interface OutcomeCardProps {
   onTomorrow: () => void;
   onSchedule: (date: string) => void;
   onContext: () => void;
+  onFocus: () => void;
+  onCheckIn: () => void;
 }
 
 export function OutcomeCard(props: OutcomeCardProps) {
@@ -26,7 +28,10 @@ export function OutcomeCard(props: OutcomeCardProps) {
     <View
       style={[
         styles.card,
-        { backgroundColor: theme.surface, borderColor: theme.hairline },
+        {
+          backgroundColor: outcome.focusStartedAt ? theme.surfaceStrong : theme.surface,
+          borderColor: outcome.focusStartedAt ? theme.moss : theme.hairline,
+        },
         Platform.OS === "web"
           ? { boxShadow: `0 8px 24px ${theme.shadow}` }
           : {
@@ -40,12 +45,17 @@ export function OutcomeCard(props: OutcomeCardProps) {
     >
       <View style={styles.topline}>
         <Text style={[styles.index, { color: theme.accent }]}>0{props.index + 1}</Text>
-        {outcome.estimateMinutes && (
+        {outcome.focusStartedAt ? (
+          <Text style={[styles.focusStatus, { color: theme.moss }]}>IN FOCUS</Text>
+        ) : outcome.blockedAt ? (
+          <Text style={[styles.focusStatus, { color: theme.accent }]}>BLOCKED</Text>
+        ) : outcome.estimateMinutes ? (
           <Text style={[styles.estimate, { color: theme.inkMuted }]}>
             {outcome.estimateMinutes} MIN
           </Text>
-        )}
+        ) : null}
       </View>
+
       <View style={styles.body}>
         <Pressable
           accessibilityLabel={`Complete ${outcome.title}`}
@@ -63,6 +73,46 @@ export function OutcomeCard(props: OutcomeCardProps) {
             </Text>
           ) : null}
         </View>
+      </View>
+
+      <View
+        style={[
+          styles.execution,
+          {
+            backgroundColor: outcome.focusStartedAt ? theme.background : "transparent",
+            borderColor: theme.hairline,
+          },
+        ]}
+      >
+        <View style={styles.executionCopy}>
+          <Text style={[styles.executionLabel, { color: theme.inkMuted }]}>
+            {outcome.focusStartedAt
+              ? "YOUR NEXT MOVE"
+              : outcome.blockedAt
+                ? "BLOCKER CAPTURED"
+                : "READY TO BEGIN"}
+          </Text>
+          <Text style={[styles.executionText, { color: theme.ink }]}>
+            {outcome.focusStartedAt
+              ? outcome.nextAction
+              : outcome.blockedAt
+                ? outcome.lastProgressNote
+                : "Turn this outcome into one concrete move."}
+          </Text>
+        </View>
+        <Button
+          accessibilityLabel={
+            outcome.focusStartedAt
+              ? `Check in on ${outcome.title}`
+              : `${outcome.blockedAt ? "Unblock" : "Focus"} ${outcome.title}`
+          }
+          compact
+          kind={outcome.focusStartedAt ? "primary" : "outline"}
+          onPress={outcome.focusStartedAt ? props.onCheckIn : props.onFocus}
+          theme={theme}
+        >
+          {outcome.focusStartedAt ? "Check in" : outcome.blockedAt ? "Unblock" : "Focus this"}
+        </Button>
       </View>
 
       <Pressable
@@ -90,6 +140,11 @@ export function OutcomeCard(props: OutcomeCardProps) {
               Guardrail — {outcome.constraints}
             </Text>
           ) : null}
+          {outcome.lastProgressNote && !outcome.blockedAt ? (
+            <Text style={[styles.progressNote, { color: theme.inkMuted }]}>
+              Last check-in — {outcome.lastProgressNote}
+            </Text>
+          ) : null}
           <View style={styles.actions}>
             <Button compact kind="outline" onPress={props.onEdit} theme={theme}>
               Edit
@@ -106,6 +161,7 @@ export function OutcomeCard(props: OutcomeCardProps) {
           </View>
           <View style={styles.schedule}>
             <TextInput
+              accessibilityLabel={`Schedule ${outcome.title}`}
               onChangeText={setTargetDate}
               placeholder="YYYY-MM-DD"
               placeholderTextColor={theme.inkMuted}
@@ -145,6 +201,7 @@ const styles = StyleSheet.create({
   topline: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   index: { fontFamily: fonts.mono, fontSize: 10, letterSpacing: 1.3 },
   estimate: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1.1 },
+  focusStatus: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1.1 },
   body: { alignItems: "flex-start", flexDirection: "row", gap: 16 },
   check: {
     alignItems: "center",
@@ -159,11 +216,24 @@ const styles = StyleSheet.create({
   copy: { flex: 1, gap: 7 },
   title: { fontFamily: fonts.serifMedium, fontSize: 25, letterSpacing: -0.4, lineHeight: 29 },
   desired: { fontFamily: fonts.serif, fontSize: 15, lineHeight: 21 },
+  execution: {
+    alignItems: "center",
+    borderRadius: 3,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    padding: 12,
+  },
+  executionCopy: { flex: 1, gap: 4 },
+  executionLabel: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.1 },
+  executionText: { fontFamily: fonts.serif, fontSize: 14, lineHeight: 19 },
   toggle: { fontFamily: fonts.mono, fontSize: 9, letterSpacing: 0.8, textTransform: "uppercase" },
   details: { borderTopWidth: 1, gap: 15, paddingTop: 18 },
   context: { fontFamily: fonts.serif, fontSize: 15, lineHeight: 22 },
   contextEmpty: { fontFamily: fonts.serif, fontSize: 15, fontStyle: "italic", lineHeight: 22 },
   constraint: { fontFamily: fonts.serif, fontSize: 13, lineHeight: 19 },
+  progressNote: { fontFamily: fonts.serif, fontSize: 13, fontStyle: "italic", lineHeight: 19 },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   schedule: { alignItems: "center", flexDirection: "row", gap: 6 },
   dateInput: {

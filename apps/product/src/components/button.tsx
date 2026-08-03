@@ -5,6 +5,7 @@ import { fonts, type Theme } from "@/constants/theme";
 interface ButtonProps extends PropsWithChildren {
   theme: Theme;
   onPress: () => void;
+  accessibilityLabel?: string;
   kind?: "primary" | "quiet" | "danger" | "outline";
   disabled?: boolean;
   loading?: boolean;
@@ -16,6 +17,7 @@ export function Button({
   children,
   theme,
   onPress,
+  accessibilityLabel,
   kind = "primary",
   disabled = false,
   loading = false,
@@ -31,6 +33,7 @@ export function Button({
 
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       disabled={disabled || loading}
       onPress={onPress}

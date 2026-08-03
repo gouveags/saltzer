@@ -25,6 +25,7 @@ export function DetailSheet({
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
       <Pressable onPress={onClose} style={styles.backdrop}>
         <Pressable
+          accessibilityViewIsModal
           style={[styles.sheet, { backgroundColor: theme.surface, borderColor: theme.hairline }]}
         >
           <ScrollView contentContainerStyle={styles.content}>

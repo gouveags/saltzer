@@ -17,7 +17,11 @@ import {
   DailyOutcomeLimitError,
   LocalDateSchema,
   OutcomeDecisionInputSchema,
+  OutcomeNotActionableError,
+  OutcomeNotFocusedError,
   OutcomeSchema,
+  ProgressCheckInInputSchema,
+  StartFocusInputSchema,
   TodayViewSchema,
   UnresolvedDailyOutcomesError,
   UpdateOutcomeInputSchema,
@@ -183,6 +187,61 @@ export function createSaltzerApp(env: SaltzerEnv) {
     return context.json(serializeOutcome(outcome), 200);
   });
 
+  const startFocusRoute = createRoute({
+    method: "post",
+    path: "/v1/outcomes/{id}/focus",
+    request: {
+      params: OutcomeParamsSchema,
+      body: { content: { "application/json": { schema: StartFocusInputSchema } } },
+    },
+    responses: {
+      200: { content: { "application/json": { schema: OutcomeSchema } }, description: "Focused" },
+      404: { content: { "application/json": { schema: ErrorSchema } }, description: "Not found" },
+      409: {
+        content: { "application/json": { schema: ErrorSchema } },
+        description: "Outcome cannot be focused",
+      },
+    },
+  });
+  app.openapi(startFocusRoute, async (context) => {
+    const { id } = context.req.valid("param");
+    const outcome = await repository.startFocus(
+      context.get("userId"),
+      id,
+      context.req.valid("json"),
+    );
+    return context.json(serializeOutcome(outcome), 200);
+  });
+
+  const progressRoute = createRoute({
+    method: "post",
+    path: "/v1/outcomes/{id}/progress",
+    request: {
+      params: OutcomeParamsSchema,
+      body: { content: { "application/json": { schema: ProgressCheckInInputSchema } } },
+    },
+    responses: {
+      200: {
+        content: { "application/json": { schema: OutcomeSchema } },
+        description: "Progress recorded",
+      },
+      404: { content: { "application/json": { schema: ErrorSchema } }, description: "Not found" },
+      409: {
+        content: { "application/json": { schema: ErrorSchema } },
+        description: "Outcome cannot accept progress",
+      },
+    },
+  });
+  app.openapi(progressRoute, async (context) => {
+    const { id } = context.req.valid("param");
+    const outcome = await repository.checkInProgress(
+      context.get("userId"),
+      id,
+      context.req.valid("json"),
+    );
+    return context.json(serializeOutcome(outcome), 200);
+  });
+
   const decisionRoute = createRoute({
     method: "post",
     path: "/v1/outcomes/{id}/decision",
@@ -312,6 +371,12 @@ export function createSaltzerApp(env: SaltzerEnv) {
     }
     if (error instanceof UnresolvedDailyOutcomesError) {
       return context.json(jsonError("UNRESOLVED_OUTCOMES", error.message), 409);
+    }
+    if (error instanceof OutcomeNotActionableError) {
+      return context.json(jsonError("OUTCOME_NOT_ACTIONABLE", error.message), 409);
+    }
+    if (error instanceof OutcomeNotFocusedError) {
+      return context.json(jsonError("OUTCOME_NOT_FOCUSED", error.message), 409);
     }
     if (error instanceof OutcomeNotFoundError || error instanceof DailyContractNotFoundError) {
       return context.json(jsonError("NOT_FOUND", error.message), 404);
