@@ -15,6 +15,13 @@
       "when": 1785750311306,
       "tag": "20260803094511_tiresome_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785767752029,
+      "tag": "20260803143552_new_chronomancer",
+      "breakpoints": true
     }
   ]
 }

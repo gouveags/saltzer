@@ -95,6 +95,26 @@ program
   );
 
 program
+  .command("capacity")
+  .description("Set or clear the honest amount of focused time available today")
+  .option("--minutes <number>", "Available minutes", Number.parseInt)
+  .option("--clear", "Return today to unknown capacity", false)
+  .option("--date <date>", "Local date in YYYY-MM-DD")
+  .action(async (options: { minutes?: number; clear: boolean; date?: string }) => {
+    if (
+      (options.minutes === undefined && !options.clear) ||
+      (options.minutes !== undefined && options.clear)
+    ) {
+      throw new Error("Choose exactly one of --minutes or --clear.");
+    }
+    print(
+      await client().setDailyCapacity(date(options.date), {
+        capacityMinutes: options.clear ? null : (options.minutes ?? null),
+      }),
+    );
+  });
+
+program
   .command("focus")
   .description("Make a chosen outcome the one thing to move now")
   .argument("<id>")

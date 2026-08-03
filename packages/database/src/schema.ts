@@ -172,7 +172,10 @@ export const outcomeEvents = pgTable(
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("outcome_events_outcome_created_idx").on(table.outcomeId, table.createdAt)],
+  (table) => [
+    index("outcome_events_outcome_created_idx").on(table.outcomeId, table.createdAt),
+    index("outcome_events_user_from_date_idx").on(table.userId, table.fromDate),
+  ],
 );
 
 export const apiTokens = pgTable(

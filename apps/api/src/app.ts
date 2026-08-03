@@ -13,6 +13,7 @@ import {
   CloseDayResultSchema,
   ContextPacketSchema,
   CreateOutcomeInputSchema,
+  DailyCapacitySchema,
   DailyContractClosedError,
   DailyOutcomeLimitError,
   LocalDateSchema,
@@ -21,6 +22,7 @@ import {
   OutcomeNotFocusedError,
   OutcomeSchema,
   ProgressCheckInInputSchema,
+  SetDailyCapacityInputSchema,
   StartFocusInputSchema,
   TodayViewSchema,
   UnresolvedDailyOutcomesError,
@@ -141,6 +143,40 @@ export function createSaltzerApp(env: SaltzerEnv) {
     const input = context.req.valid("json");
     const outcome = await repository.createOutcome(context.get("userId"), date, input);
     return context.json(serializeOutcome(outcome), 200);
+  });
+
+  const setCapacityRoute = createRoute({
+    method: "patch",
+    path: "/v1/contracts/{date}/capacity",
+    request: {
+      params: z.object({ date: LocalDateSchema }),
+      body: { content: { "application/json": { schema: SetDailyCapacityInputSchema } } },
+    },
+    responses: {
+      200: {
+        content: { "application/json": { schema: DailyCapacitySchema } },
+        description: "Daily capacity saved",
+      },
+      409: {
+        content: { "application/json": { schema: ErrorSchema } },
+        description: "Daily Contract is closed",
+      },
+    },
+  });
+  app.openapi(setCapacityRoute, async (context) => {
+    const { date } = context.req.valid("param");
+    const contract = await repository.setDailyCapacity(
+      context.get("userId"),
+      date,
+      context.req.valid("json"),
+    );
+    return context.json(
+      DailyCapacitySchema.parse({
+        localDate: contract.localDate,
+        capacityMinutes: contract.capacityMinutes,
+      }),
+      200,
+    );
   });
 
   const closeDayRoute = createRoute({
@@ -303,8 +339,19 @@ export function createSaltzerApp(env: SaltzerEnv) {
   app.openapi(contextPacketRoute, async (context) => {
     const { id } = context.req.valid("param");
     const { date } = context.req.valid("query");
-    const outcome = serializeOutcome(await repository.getOutcome(context.get("userId"), id));
-    return context.json(buildContextPacket(outcome, date), 200);
+    const userId = context.get("userId");
+    const outcome = serializeOutcome(await repository.getOutcome(userId, id));
+    const today = serializeToday(date, await repository.getDailyContract(userId, date));
+    const { realityCheck } = today;
+    return context.json(
+      buildContextPacket(outcome, date, {
+        capacityMinutes: realityCheck.capacityMinutes,
+        plannedMinutes: realityCheck.plannedMinutes,
+        remainingMinutes: realityCheck.remainingMinutes,
+        status: realityCheck.status,
+      }),
+      200,
+    );
   });
 
   const createTokenRoute = createRoute({

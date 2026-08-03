@@ -63,6 +63,16 @@ describeWithDatabase("Saltzer API integration", () => {
     const ownerCookie = await signUp(emails[0]);
     const outcomes: Array<{ id: string }> = [];
 
+    const capacity = await instance.app.request("/v1/contracts/2026-08-03/capacity", {
+      ...jsonRequest({ capacityMinutes: 180 }, ownerCookie),
+      method: "PATCH",
+    });
+    expect(capacity.status).toBe(200);
+    await expect(capacity.json()).resolves.toEqual({
+      localDate: "2026-08-03",
+      capacityMinutes: 180,
+    });
+
     for (let index = 1; index <= 3; index += 1) {
       const response = await instance.app.request(
         "/v1/contracts/2026-08-03/outcomes",
@@ -108,6 +118,12 @@ describeWithDatabase("Saltzer API integration", () => {
       title: "Outcome 1",
       context: "Only explicitly shared context",
       permissions: ["read_context", "suggest"],
+      day: {
+        capacityMinutes: 180,
+        plannedMinutes: 90,
+        remainingMinutes: 90,
+        status: "within_capacity",
+      },
     });
 
     const focusFirst = await instance.app.request(`/v1/outcomes/${outcomes[0]?.id}/focus`, {
@@ -207,6 +223,17 @@ describeWithDatabase("Saltzer API integration", () => {
     expect(tokenEscalationWithBearer.status).toBe(403);
 
     const otherCookie = await signUp(emails[1]);
+    const otherToday = await instance.app.request("/v1/today?date=2026-08-03", {
+      headers: { Cookie: otherCookie, Origin: origin },
+    });
+    await expect(otherToday.json()).resolves.toMatchObject({
+      contract: null,
+      realityCheck: {
+        capacityMinutes: null,
+        plannedMinutes: 0,
+        recent: { completed: 0, released: 0, rescheduled: 0 },
+      },
+    });
     const crossUserUpdate = await instance.app.request(`/v1/outcomes/${outcomes[0]?.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Cookie: otherCookie, Origin: origin },
@@ -245,6 +272,30 @@ describeWithDatabase("Saltzer API integration", () => {
       localDate: "2026-08-03",
       status: "closed",
       closedAt: expect.any(String),
+    });
+
+    const history = await instance.app.request("/v1/today?date=2026-08-04", {
+      headers: { Cookie: ownerCookie, Origin: origin },
+    });
+    await expect(history.json()).resolves.toMatchObject({
+      realityCheck: {
+        recent: {
+          daysReviewed: 1,
+          completed: 1,
+          released: 1,
+          rescheduled: 1,
+          completionRate: 33,
+        },
+      },
+    });
+
+    const closedCapacity = await instance.app.request("/v1/contracts/2026-08-03/capacity", {
+      ...jsonRequest({ capacityMinutes: 240 }, ownerCookie),
+      method: "PATCH",
+    });
+    expect(closedCapacity.status).toBe(409);
+    await expect(closedCapacity.json()).resolves.toMatchObject({
+      error: { code: "CONTRACT_CLOSED" },
     });
 
     const lateAddition = await instance.app.request(

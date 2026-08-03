@@ -15,11 +15,13 @@ improves the next deliberate choice.
 The first release owns one complete loop:
 
 1. Choose at most three meaningful outcomes for today.
-2. Record why each matters, the desired result, constraints, and useful context.
-3. Start manually or export a permissioned context packet to an AI provider.
-4. Complete, release, or deliberately reschedule the outcome.
-5. Close the day and reconsider unfinished work instead of carrying it silently.
-6. Surface genuinely scheduled work on the intended date.
+2. Name the focused time actually available and see whether estimated work fits.
+3. Record why each outcome matters, the desired result, constraints, and useful context.
+4. Start manually or export a permissioned context packet to an AI provider.
+5. Complete, release, or deliberately reschedule the outcome.
+6. Close the day and reconsider unfinished work instead of carrying it silently.
+7. Surface genuinely scheduled work on the intended date.
+8. Let recent decisions improve the next morning without turning productivity into a score.
 
 ## Acceptance criteria
 
@@ -30,6 +32,7 @@ The first release owns one complete loop:
 - Closing requires a decision for every outcome and makes the Daily Contract immutable.
 - Scheduled outcomes become eligible on their selected local date.
 - A context packet previews the exact information and allowed action shared with AI.
+- The person and their AI see the same explicit capacity pressure; unknown work stays unknown.
 - CLI and MCP can read and mutate the same authenticated Daily Contract.
 - Empty, loading, offline, validation, and server-error states remain coherent.
 - Local setup, migrations, tests, builds, and self-hosting are documented.
@@ -49,3 +52,8 @@ The first product measure is not total tasks created. It is the percentage of
 people who form a real Daily Contract and complete one meaningful outcome within
 24 hours. Healthy retention means returning to plan deliberately at least three
 days per week—not compulsive engagement.
+
+The auditable distance to the whole founding vision lives in
+[vision-scorecard.md](./vision-scorecard.md).
+The public positioning and interface tone are captured in
+[visual-direction.md](./visual-direction.md).

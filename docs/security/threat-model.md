@@ -28,6 +28,7 @@ No model provider receives data in this slice. “Start with AI” displays the 
 | Bearer-token disclosure | Tokens contain 256 bits of randomness, are returned once, sent only in the `Authorization` header, and stored as SHA-256 hashes. | SDK and API tests assert header transport, one-way storage behavior, and token auth. |
 | Token privilege escalation | Token-authenticated callers cannot mint more tokens. | API integration tests assert `SESSION_REQUIRED`. |
 | Hidden AI data access | The domain constructs a bounded context packet from one owned outcome and explicit permissions. | MCP and browser journeys inspect the exact payload. |
+| Cross-account behavior inference | Reality checks query decision events by authenticated `userId` and a bounded local-date window; clients cannot submit ownership identifiers. | Repository and API integration tests prove another user receives no contract or decision history. |
 | XSS through outcome text | React Native renders text as text nodes; there is no raw HTML path. | Browser journey exercises user-controlled context. |
 | Response sniffing and framing | Hono secure headers add HSTS, `nosniff`, frame, referrer, and cross-origin policies. | API integration test checks security headers. |
 | Dependency compromise | Frozen lockfile, minimum release age, high/critical audit gate, dependency review, Dependabot, and secret push protection. | GitHub CI and repository security settings. |

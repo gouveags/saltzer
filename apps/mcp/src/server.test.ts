@@ -23,7 +23,31 @@ describe("Saltzer MCP server", () => {
 
   function fakeClient(): SaltzerToolClient {
     return {
-      today: vi.fn(async (date) => ({ localDate: date, contract: null, scheduledCandidates: [] })),
+      today: vi.fn(
+        async (date) =>
+          ({
+            localDate: date,
+            contract: null,
+            scheduledCandidates: [],
+            realityCheck: {
+              localDate: date,
+              capacityMinutes: null,
+              plannedMinutes: 0,
+              unestimatedOutcomes: 0,
+              remainingMinutes: null,
+              status: "unset",
+              due: { count: 0, estimatedMinutes: 0, unestimatedOutcomes: 0 },
+              recent: {
+                lookbackDays: 7,
+                daysReviewed: 0,
+                completed: 0,
+                released: 0,
+                rescheduled: 0,
+                completionRate: null,
+              },
+            },
+          }) as never,
+      ),
       addOutcome: vi.fn(),
       addScheduledToDay: vi.fn(),
       closeDay: vi.fn(async (date) => ({ localDate: date, status: "closed" }) as never),
@@ -31,6 +55,7 @@ describe("Saltzer MCP server", () => {
       contextPacket: vi.fn(),
       decideOutcome: vi.fn(async () => ({ id: outcomeId }) as never),
       startFocus: vi.fn(async () => ({ id: outcomeId }) as never),
+      setDailyCapacity: vi.fn(async (date, input) => ({ localDate: date, ...input })),
     };
   }
 
@@ -40,6 +65,7 @@ describe("Saltzer MCP server", () => {
 
     expect(tools.map((tool) => tool.name)).toEqual([
       "list_daily_contract",
+      "set_daily_capacity",
       "add_daily_outcome",
       "complete_outcome",
       "release_outcome",
@@ -51,6 +77,21 @@ describe("Saltzer MCP server", () => {
       "close_daily_contract",
       "get_context_packet",
     ]);
+  });
+
+  it("lets the agent share an explicit capacity without inferring one", async () => {
+    const implementation = fakeClient();
+    const protocolClient = await connect(implementation);
+
+    const result = await protocolClient.callTool({
+      name: "set_daily_capacity",
+      arguments: { date: "2026-08-03", capacityMinutes: 180 },
+    });
+
+    expect(implementation.setDailyCapacity).toHaveBeenCalledWith("2026-08-03", {
+      capacityMinutes: 180,
+    });
+    expect(result.isError).not.toBe(true);
   });
 
   it("closes the exact local date requested by the agent", async () => {

@@ -1,0 +1,1 @@
+CREATE INDEX "outcome_events_user_from_date_idx" ON "outcome_events" USING btree ("user_id","from_date");
