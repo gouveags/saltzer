@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: saltzer
+      POSTGRES_PASSWORD: saltzer
+      POSTGRES_USER: saltzer
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saltzer -d saltzer"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    ports:
+      - "5439:5432"
+    volumes:
+      - saltzer-postgres:/var/lib/postgresql/data
+
+volumes:
+  saltzer-postgres:

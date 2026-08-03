@@ -1,0 +1,17 @@
+node_modules/
+.turbo/
+.expo/
+.env
+.env.*
+!.env.example
+dist/
+coverage/
+playwright-report/
+test-results/
+*.log
+.DS_Store
+apps/product/android/
+apps/product/ios/
+apps/product/.expo/
+apps/product/web-build/
+packages/database/drizzle/meta/_journal.json.tmp

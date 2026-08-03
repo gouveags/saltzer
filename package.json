@@ -1,0 +1,30 @@
+{
+  "name": "saltzer",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "security:audit": "node scripts/audit.mjs",
+    "check": "biome check . && turbo run typecheck",
+    "check:fix": "biome check --write .",
+    "dev": "turbo run dev --parallel",
+    "e2e": "pnpm --filter @saltzer/e2e e2e",
+    "icons:generate": "bash scripts/generate-icons.sh",
+    "performance:web": "node scripts/check-web-budget.mjs",
+    "test": "turbo run test",
+    "db:generate": "corepack pnpm --filter @saltzer/database generate",
+    "db:migrate": "corepack pnpm --filter @saltzer/database migrate",
+    "db:up": "podman compose up -d postgres || docker compose up -d postgres",
+    "db:down": "podman compose down || docker compose down"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.6",
+    "turbo": "2.10.8",
+    "typescript": "5.9.3"
+  }
+}

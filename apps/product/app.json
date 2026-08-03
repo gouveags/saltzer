@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Saltzer",
+    "slug": "saltzer",
+    "scheme": "saltzer",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/saltzer-icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.saltzer.product",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.saltzer.product",
+      "adaptiveIcon": {
+        "backgroundColor": "#F1EBDD",
+        "foregroundImage": "./assets/images/saltzer-android-foreground.png",
+        "monochromeImage": "./assets/images/saltzer-android-monochrome.png"
+      }
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/saltzer-favicon.png"
+    },
+    "plugins": ["expo-router", "expo-secure-store", "expo-font"],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
