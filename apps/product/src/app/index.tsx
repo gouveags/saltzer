@@ -379,7 +379,12 @@ export default function HomeScreen() {
                 </Text>
               </View>
               <View style={styles.focusHeroActions}>
-                <Button kind="outline" onPress={() => void showContext(activeFocus)} theme={theme}>
+                <Button
+                  accessibilityLabel={`Start AI with current focus: ${activeFocus.title}`}
+                  kind="outline"
+                  onPress={() => void showContext(activeFocus)}
+                  theme={theme}
+                >
                   Start with AI
                 </Button>
                 <Button

@@ -149,7 +149,13 @@ export function OutcomeCard(props: OutcomeCardProps) {
             <Button compact kind="outline" onPress={props.onEdit} theme={theme}>
               Edit
             </Button>
-            <Button compact kind="outline" onPress={props.onContext} theme={theme}>
+            <Button
+              accessibilityLabel={`Start AI with ${outcome.title}`}
+              compact
+              kind="outline"
+              onPress={props.onContext}
+              theme={theme}
+            >
               Start with AI
             </Button>
             <Button compact kind="quiet" onPress={props.onTomorrow} theme={theme}>

@@ -56,8 +56,10 @@ test("a person can choose, understand, and complete today's contract", async ({ 
   await page.getByRole("button", { name: "Focus this now" }).click();
   await expect(page.getByText("IN FOCUS NOW")).toBeVisible();
 
-  await page.getByText("Context & decisions ↓", { exact: true }).first().click();
-  await page.getByRole("button", { name: "Start with AI" }).click();
+  await page
+    .getByRole("button", { name: "Show context and decisions for Choose the real work" })
+    .click();
+  await page.getByRole("button", { name: "Start AI with Choose the real work" }).click();
   await expect(page.getByText("Ready for your AI.")).toBeVisible();
   await expect(page.getByText(/"context": "This context was deliberately supplied/)).toBeVisible();
   await expect(page.getByText(/"nextAction": "Write the handoff"/)).toBeVisible();
