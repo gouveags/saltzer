@@ -1,10 +1,12 @@
 import {
   assertDailyOutcomeCapacity,
   type CreateOutcomeInput,
+  DailyContractClosedError,
   DailyOutcomeLimitError,
   type LocalDate,
   nextLocalDate,
   type OutcomeDecisionInput,
+  UnresolvedDailyOutcomesError,
   type UpdateOutcomeInput,
 } from "@saltzer/domain";
 import { and, asc, count, eq, isNull, lte, sql } from "drizzle-orm";
@@ -15,6 +17,13 @@ export class OutcomeNotFoundError extends Error {
   constructor() {
     super("Outcome not found.");
     this.name = "OutcomeNotFoundError";
+  }
+}
+
+export class DailyContractNotFoundError extends Error {
+  constructor() {
+    super("Daily Contract not found.");
+    this.name = "DailyContractNotFoundError";
   }
 }
 
@@ -79,6 +88,7 @@ export class DailyRepository {
         .returning();
 
       if (!contract) throw new Error("Unable to create Daily Contract.");
+      if (contract.status === "closed") throw new DailyContractClosedError();
 
       const [result] = await tx
         .select({ value: count() })
@@ -113,6 +123,25 @@ export class DailyRepository {
 
   async updateOutcome(userId: string, outcomeId: string, input: UpdateOutcomeInput) {
     return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(outcomes)
+        .where(and(eq(outcomes.id, outcomeId), eq(outcomes.userId, userId)))
+        .limit(1);
+
+      if (!existing) throw new OutcomeNotFoundError();
+
+      if (existing.contractId) {
+        const [contract] = await tx
+          .select({ status: dailyContracts.status })
+          .from(dailyContracts)
+          .where(eq(dailyContracts.id, existing.contractId))
+          .for("update")
+          .limit(1);
+
+        if (contract?.status === "closed") throw new DailyContractClosedError();
+      }
+
       const [outcome] = await tx
         .update(outcomes)
         .set(input)
@@ -145,6 +174,17 @@ export class DailyRepository {
         .limit(1);
 
       if (!existing) throw new OutcomeNotFoundError();
+
+      if (existing.contractId) {
+        const [contract] = await tx
+          .select({ status: dailyContracts.status })
+          .from(dailyContracts)
+          .where(eq(dailyContracts.id, existing.contractId))
+          .for("update")
+          .limit(1);
+
+        if (contract?.status === "closed") throw new DailyContractClosedError();
+      }
 
       const now = new Date();
       const targetDate =
@@ -202,6 +242,7 @@ export class DailyRepository {
         .returning();
 
       if (!contract) throw new Error("Unable to create Daily Contract.");
+      if (contract.status === "closed") throw new DailyContractClosedError();
 
       const [countResult] = await tx
         .select({ value: count() })
@@ -234,6 +275,47 @@ export class DailyRepository {
       });
 
       return outcome;
+    });
+  }
+
+  async closeDailyContract(userId: string, localDate: LocalDate) {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended(${`${userId}:${localDate}`}, 0))`,
+      );
+
+      const [contract] = await tx
+        .select()
+        .from(dailyContracts)
+        .where(and(eq(dailyContracts.userId, userId), eq(dailyContracts.localDate, localDate)))
+        .for("update")
+        .limit(1);
+
+      if (!contract) throw new DailyContractNotFoundError();
+      if (contract.status === "closed") throw new DailyContractClosedError();
+
+      const [result] = await tx
+        .select({ value: count() })
+        .from(outcomes)
+        .where(and(eq(outcomes.contractId, contract.id), eq(outcomes.status, "planned")));
+
+      if ((result?.value ?? 0) > 0) throw new UnresolvedDailyOutcomesError();
+
+      const now = new Date();
+      const [closed] = await tx
+        .update(dailyContracts)
+        .set({ status: "closed", closedAt: now, updatedAt: now })
+        .where(
+          and(
+            eq(dailyContracts.id, contract.id),
+            eq(dailyContracts.userId, userId),
+            eq(dailyContracts.status, "open"),
+          ),
+        )
+        .returning();
+
+      if (!closed) throw new DailyContractClosedError();
+      return closed;
     });
   }
 

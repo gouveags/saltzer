@@ -94,6 +94,14 @@ program
     },
   );
 
+program
+  .command("close")
+  .description("Close the Daily Contract after every outcome has an explicit decision")
+  .option("--date <date>", "Local date in YYYY-MM-DD")
+  .action(async (options: { date?: string }) => {
+    print(await client().closeDay(date(options.date)));
+  });
+
 for (const decision of ["complete", "release", "tomorrow"] as const) {
   program
     .command(decision)

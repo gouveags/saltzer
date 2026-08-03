@@ -152,5 +152,52 @@ describeWithDatabase("Saltzer API integration", () => {
       body: JSON.stringify({ title: "Stolen outcome" }),
     });
     expect(crossUserUpdate.status).toBe(404);
+
+    const prematureClose = await instance.app.request("/v1/contracts/2026-08-03/close", {
+      method: "POST",
+      headers: { Cookie: ownerCookie, Origin: origin },
+    });
+    expect(prematureClose.status).toBe(409);
+    await expect(prematureClose.json()).resolves.toMatchObject({
+      error: { code: "UNRESOLVED_OUTCOMES" },
+    });
+
+    for (const [index, decision] of ["complete", "release", "tomorrow"].entries()) {
+      const response = await instance.app.request(
+        `/v1/outcomes/${outcomes[index]?.id}/decision?date=2026-08-03`,
+        jsonRequest({ decision }, ownerCookie),
+      );
+      expect(response.status).toBe(200);
+    }
+
+    const close = await instance.app.request("/v1/contracts/2026-08-03/close", {
+      method: "POST",
+      headers: { Cookie: ownerCookie, Origin: origin },
+    });
+    expect(close.status).toBe(200);
+    await expect(close.json()).resolves.toMatchObject({
+      localDate: "2026-08-03",
+      status: "closed",
+      closedAt: expect.any(String),
+    });
+
+    const lateAddition = await instance.app.request(
+      "/v1/contracts/2026-08-03/outcomes",
+      jsonRequest(
+        {
+          title: "Late addition",
+          desiredOutcome: "",
+          context: "",
+          constraints: "",
+          estimateMinutes: null,
+          aiPermissions: [],
+        },
+        ownerCookie,
+      ),
+    );
+    expect(lateAddition.status).toBe(409);
+    await expect(lateAddition.json()).resolves.toMatchObject({
+      error: { code: "CONTRACT_CLOSED" },
+    });
   });
 });

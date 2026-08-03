@@ -1,5 +1,10 @@
 import type { schema } from "@saltzer/database";
-import { DailyContractSchema, OutcomeSchema, TodayViewSchema } from "@saltzer/domain";
+import {
+  CloseDayResultSchema,
+  DailyContractSchema,
+  OutcomeSchema,
+  TodayViewSchema,
+} from "@saltzer/domain";
 
 type OutcomeRow = typeof schema.outcomes.$inferSelect;
 type ContractRow = typeof schema.dailyContracts.$inferSelect;
@@ -11,6 +16,14 @@ export function serializeOutcome(row: OutcomeRow) {
     releasedAt: row.releasedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+  });
+}
+
+export function serializeClosedContract(row: ContractRow) {
+  return CloseDayResultSchema.parse({
+    localDate: row.localDate,
+    status: row.status,
+    closedAt: row.closedAt?.toISOString(),
   });
 }
 

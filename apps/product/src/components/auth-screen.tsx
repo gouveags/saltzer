@@ -135,6 +135,8 @@ export function AuthScreen({ theme }: { theme: Theme }) {
               {mode === "sign-up" ? "Create my day" : "Enter Saltzer"}
             </Button>
             <Pressable
+              accessibilityLabel={mode === "sign-up" ? "Sign in" : "Create an account"}
+              accessibilityRole="button"
               onPress={() => {
                 setError(null);
                 setMode(mode === "sign-up" ? "sign-in" : "sign-up");

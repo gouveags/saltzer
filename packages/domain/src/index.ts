@@ -61,6 +61,12 @@ export const TodayViewSchema = z.object({
   scheduledCandidates: z.array(OutcomeSchema),
 });
 
+export const CloseDayResultSchema = z.object({
+  localDate: LocalDateSchema,
+  status: z.literal("closed"),
+  closedAt: z.iso.datetime(),
+});
+
 export const CreateOutcomeInputSchema = z.object({
   title: z.string().trim().min(1).max(180),
   desiredOutcome: z.string().trim().max(2_000).default(""),
@@ -110,12 +116,27 @@ export type CreateOutcomeInput = z.infer<typeof CreateOutcomeInputSchema>;
 export type UpdateOutcomeInput = z.infer<typeof UpdateOutcomeInputSchema>;
 export type OutcomeDecisionInput = z.infer<typeof OutcomeDecisionInputSchema>;
 export type ContextPacket = z.infer<typeof ContextPacketSchema>;
+export type CloseDayResult = z.infer<typeof CloseDayResultSchema>;
 export type AiPermission = z.infer<typeof AiPermissionSchema>;
 
 export class DailyOutcomeLimitError extends Error {
   constructor() {
     super(`A Daily Contract can hold at most ${MAX_DAILY_OUTCOMES} outcomes.`);
     this.name = "DailyOutcomeLimitError";
+  }
+}
+
+export class DailyContractClosedError extends Error {
+  constructor() {
+    super("This Daily Contract is already closed.");
+    this.name = "DailyContractClosedError";
+  }
+}
+
+export class UnresolvedDailyOutcomesError extends Error {
+  constructor() {
+    super("Complete, release, or reschedule every outcome before closing the day.");
+    this.name = "UnresolvedDailyOutcomesError";
   }
 }
 

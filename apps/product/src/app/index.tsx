@@ -155,6 +155,16 @@ export default function HomeScreen() {
     }
   }
 
+  async function closeDay() {
+    await mutate(() => api.closeDay(localDate));
+    setDetail({
+      eyebrow: "DAY CLOSED",
+      title: "Enough for today.",
+      note: "Nothing carries forward silently. Tomorrow begins with a fresh choice.",
+      body: "Your Daily Contract is closed and cannot be changed. The work you completed, released, or rescheduled remains an honest record of the day.",
+    });
+  }
+
   if (sessionPending) {
     return <LoadingScreen theme={theme} />;
   }
@@ -165,9 +175,11 @@ export default function HomeScreen() {
   const outcomes = view?.contract?.outcomes ?? [];
   const planned = outcomes.filter((outcome) => outcome.status === "planned");
   const completed = outcomes.filter((outcome) => outcome.status === "completed");
+  const released = outcomes.filter((outcome) => outcome.status === "released");
   const committedCount = outcomes.length;
-  const canAdd = committedCount < 3;
-  const restraintPositions = [0, 1, 2].slice(planned.length + (canAdd ? 1 : 0));
+  const contractClosed = view?.contract?.status === "closed";
+  const canAdd = !contractClosed && committedCount < 3;
+  const restraintPositions = [0, 1, 2].slice(committedCount + (canAdd ? 1 : 0));
   const greetingName = session.user.name?.split(" ")[0] ?? "there";
 
   return (
@@ -242,9 +254,11 @@ export default function HomeScreen() {
             </View>
             <View style={[styles.progress, { borderColor: theme.hairline }]}>
               <Text style={[styles.progressNumber, { color: theme.ink }]}>
-                {completed.length}/{Math.max(committedCount, 3)}
+                {contractClosed ? "✓" : `${completed.length}/${Math.max(committedCount, 3)}`}
               </Text>
-              <Text style={[styles.progressLabel, { color: theme.inkMuted }]}>DONE</Text>
+              <Text style={[styles.progressLabel, { color: theme.inkMuted }]}>
+                {contractClosed ? "CLOSED" : "DONE"}
+              </Text>
             </View>
           </View>
 
@@ -262,7 +276,7 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {(view?.scheduledCandidates.length ?? 0) > 0 && (
+          {!contractClosed && (view?.scheduledCandidates.length ?? 0) > 0 && (
             <View
               style={[
                 styles.scheduled,
@@ -309,6 +323,25 @@ export default function HomeScreen() {
             <View style={styles.loadingBlock}>
               <ActivityIndicator color={theme.accent} />
             </View>
+          ) : contractClosed ? (
+            <View
+              style={[
+                styles.closedDay,
+                { backgroundColor: theme.surfaceStrong, borderColor: theme.hairline },
+              ]}
+            >
+              <Text style={[styles.closedMark, { color: theme.success }]}>✓</Text>
+              <View style={styles.closedCopy}>
+                <Text style={[styles.closedKicker, { color: theme.success }]}>DAY CLOSED</Text>
+                <Text style={[styles.closedTitle, { color: theme.ink }]}>
+                  Tomorrow begins fresh.
+                </Text>
+                <Text style={[styles.closedBody, { color: theme.inkMuted }]}>
+                  Nothing was carried forward without a decision. This contract is now an immutable
+                  record of the day.
+                </Text>
+              </View>
+            </View>
           ) : (
             <View style={styles.grid}>
               {planned.map((outcome, index) => (
@@ -332,6 +365,8 @@ export default function HomeScreen() {
               ))}
               {canAdd && (
                 <Pressable
+                  accessibilityLabel="Choose an outcome"
+                  accessibilityRole="button"
                   onPress={() => {
                     setEditing(null);
                     setEditorOpen(true);
@@ -376,6 +411,41 @@ export default function HomeScreen() {
                   ✓ {outcome.title}
                 </Text>
               ))}
+            </View>
+          )}
+
+          {released.length > 0 && (
+            <View style={[styles.completed, { borderTopColor: theme.hairline }]}>
+              <Text style={[styles.sectionKicker, { color: theme.inkMuted }]}>
+                RELEASED WITHOUT GUILT
+              </Text>
+              {released.map((outcome) => (
+                <Text key={outcome.id} style={[styles.releasedItem, { color: theme.inkMuted }]}>
+                  − {outcome.title}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          {view?.contract && !contractClosed && planned.length === 0 && (
+            <View style={[styles.closeDay, { borderColor: theme.hairline }]}>
+              <View style={styles.closeDayCopy}>
+                <Text style={[styles.sectionKicker, { color: theme.accent }]}>ALL DECIDED</Text>
+                <Text style={[styles.closeDayTitle, { color: theme.ink }]}>
+                  Close the day cleanly.
+                </Text>
+                <Text style={[styles.closeDayBody, { color: theme.inkMuted }]}>
+                  Preserve today as it happened. Once closed, this contract cannot be changed.
+                </Text>
+              </View>
+              <Button
+                disabled={mutationPending}
+                loading={mutationPending}
+                onPress={() => void closeDay()}
+                theme={theme}
+              >
+                Close the day
+              </Button>
             </View>
           )}
 
@@ -577,6 +647,34 @@ const styles = StyleSheet.create({
   loadingBlock: { alignItems: "center", minHeight: 260, paddingTop: 80 },
   completed: { borderTopWidth: 1, gap: 9, marginTop: 34, paddingTop: 24 },
   completedItem: { fontFamily: fonts.serif, fontSize: 16, textDecorationLine: "line-through" },
+  releasedItem: { fontFamily: fonts.serif, fontSize: 16, fontStyle: "italic" },
+  closedDay: {
+    alignItems: "center",
+    borderRadius: 4,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 22,
+    minHeight: 168,
+    padding: 28,
+  },
+  closedMark: { fontFamily: fonts.display, fontSize: 42 },
+  closedCopy: { flex: 1, gap: 5 },
+  closedKicker: { fontFamily: fonts.mono, fontSize: 8, letterSpacing: 1.4 },
+  closedTitle: { fontFamily: fonts.display, fontSize: 29, letterSpacing: -0.7 },
+  closedBody: { fontFamily: fonts.serif, fontSize: 15, lineHeight: 22, maxWidth: 650 },
+  closeDay: {
+    alignItems: "center",
+    borderRadius: 4,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 28,
+    justifyContent: "space-between",
+    marginTop: 34,
+    padding: 24,
+  },
+  closeDayCopy: { flex: 1, gap: 6 },
+  closeDayTitle: { fontFamily: fonts.display, fontSize: 26, letterSpacing: -0.5 },
+  closeDayBody: { fontFamily: fonts.serif, fontSize: 14, lineHeight: 20 },
   agent: {
     alignItems: "center",
     borderRadius: 4,

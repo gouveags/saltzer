@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export type SaltzerToolClient = Pick<
   SaltzerClient,
-  "addOutcome" | "addScheduledToDay" | "contextPacket" | "decideOutcome" | "today"
+  "addOutcome" | "addScheduledToDay" | "closeDay" | "contextPacket" | "decideOutcome" | "today"
 >;
 
 function text(value: unknown) {
@@ -100,6 +100,16 @@ export function createMcpServer(client: SaltzerToolClient) {
       inputSchema: { id: z.uuid(), date: LocalDateSchema },
     },
     async ({ id, date }) => text(await client.addScheduledToDay(id, date)),
+  );
+
+  server.registerTool(
+    "close_daily_contract",
+    {
+      description:
+        "Close the day only after every outcome has been completed, released, or rescheduled.",
+      inputSchema: { date: LocalDateSchema },
+    },
+    async ({ date }) => text(await client.closeDay(date)),
   );
 
   server.registerTool(

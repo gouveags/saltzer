@@ -6,7 +6,7 @@ Saltzer treats quality as a product capability: a daily execution system is only
 
 1. **The domain owns the rules.** Daily Contract capacity, date semantics, decisions, and permissioned context live in `@saltzer/domain`. They do not import UI, database, HTTP, or AI-provider code.
 2. **Use cases cross explicit ports.** The API coordinates authentication and repositories. Web, native, CLI, and MCP are clients of the same contract instead of parallel implementations of the product.
-3. **Persistence enforces race-sensitive invariants.** Domain validation gives fast feedback; PostgreSQL transactions and advisory locks protect the three-outcome limit under concurrent requests.
+3. **Persistence enforces race-sensitive invariants.** Domain validation gives fast feedback; PostgreSQL transactions, advisory locks, and row locks protect both the three-outcome limit and closed-contract immutability under concurrent requests.
 4. **AI is a permissioned collaborator.** A context packet is explicit and inspectable. Provider adapters may consume it, but they may not read hidden product state or perform external side effects without a separate permission.
 5. **Prefer a modular monolith.** Package boundaries are deliberate; network boundaries must be earned by operational need.
 
