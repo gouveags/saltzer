@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "audit": "pnpm audit --prod --audit-level high",
+    "security:audit": "node scripts/audit.mjs",
     "check": "biome check . && turbo run typecheck",
     "check:fix": "biome check --write .",
     "dev": "turbo run dev --parallel",
