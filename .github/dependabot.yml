@@ -5,10 +5,21 @@ updates:
     schedule:
       interval: weekly
     groups:
-      production-dependencies:
+      production-minor-and-patch:
         dependency-type: production
-      development-dependencies:
+        update-types:
+          - minor
+          - patch
+      development-minor-and-patch:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Runtime types must track the Node major used in CI and production.
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
     schedule:
