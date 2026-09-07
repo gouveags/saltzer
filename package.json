@@ -23,8 +23,8 @@
     "db:down": "podman compose down || docker compose down"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.6",
-    "turbo": "2.10.8",
+    "@biomejs/biome": "2.5.12",
+    "turbo": "2.10.12",
     "typescript": "5.9.3"
   }
 }
