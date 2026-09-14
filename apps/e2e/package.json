@@ -8,8 +8,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1",
-    "@types/node": "22.19.15",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.2",
     "typescript": "catalog:"
   }
 }
