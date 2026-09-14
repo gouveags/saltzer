@@ -8,7 +8,7 @@ allowBuilds:
 
 catalog:
   typescript: 5.9.3
-  zod: 4.4.3
+  zod: 4.6.2
 
 minimumReleaseAgeExclude:
   - tsx@4.23.5
