@@ -13,7 +13,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.32.0",
     "@saltzer/domain": "workspace:*",
     "@saltzer/sdk": "workspace:*",
     "zod": "catalog:"
